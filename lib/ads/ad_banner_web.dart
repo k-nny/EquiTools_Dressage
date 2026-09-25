@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 /// Identifiant client AdSense — PLACEHOLDER. Remplacez par votre vrai
 /// "ca-pub-XXXXXXXXXXXXXXXX" (compte AdSense approuvé) avant publication,
 /// ET mettez à jour la même valeur dans le <script> de web/index.html.
-const String _idClientAdSense = 'ca-pub-0000000000000000';
+const String _idClientAdSense = 'ca-pub-5542426936476445';
 
 /// Emplacement ("ad slot") AdSense — PLACEHOLDER. Remplacez par un vrai
 /// numéro d'emplacement créé dans votre compte AdSense.
