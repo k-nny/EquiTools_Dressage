@@ -1,0 +1,9 @@
+android/
+ios/
+linux/
+macos/
+windows/
+build/
+_flutter/
+.dart_tool/
+test/
