@@ -8,23 +8,98 @@ import 'package:reprise_dressage_app/Figures/demi_volte.dart';
 import 'package:reprise_dressage_app/Figures/demi_volte_renversee.dart';
 import 'package:reprise_dressage_app/Figures/serpentine.dart';
 
-/// Les trois allures utilisées dans la reprise, plus l'arrêt.
-enum Allure { pas, pasAllonge, trot, galop, arret }
+/// Grandes familles d'allures : c'est elle qui détermine la couleur de base
+/// (🟢 pas, 🔵 trot, 🔴 galop) ; chaque variante en est une nuance.
+enum Famille { pas, trot, galop, arret }
+
+/// Toutes les allures disponibles. Pour en ajouter une : l'ajouter ici,
+/// puis dans les quatre getters ci-dessous (famille, label, couleur,
+/// vitesse) — rien d'autre à modifier dans l'application.
+///
+/// ⚠️ Les noms existants (pas, pasAllonge, trot, galop, arret) sont
+/// enregistrés tels quels dans les reprises sauvegardées : ne pas les
+/// renommer.
+enum Allure {
+  // Pas
+  pas,
+  pasLibre,
+  pasMoyen,
+  pasAllonge,
+  pasRassemble,
+  // Trot
+  trot,
+  trotMoyen,
+  trotAllonge,
+  trotRassemble,
+  passage,
+  piaffer,
+  // Galop
+  galop,
+  galopMoyen,
+  galopAllonge,
+  galopRassemble,
+  // Arrêt
+  arret,
+}
 
 extension AllureStyle on Allure {
+  Famille get famille => switch (this) {
+    Allure.pas ||
+    Allure.pasLibre ||
+    Allure.pasMoyen ||
+    Allure.pasAllonge ||
+    Allure.pasRassemble => Famille.pas,
+    Allure.trot ||
+    Allure.trotMoyen ||
+    Allure.trotAllonge ||
+    Allure.trotRassemble ||
+    Allure.passage ||
+    Allure.piaffer => Famille.trot,
+    Allure.galop ||
+    Allure.galopMoyen ||
+    Allure.galopAllonge ||
+    Allure.galopRassemble => Famille.galop,
+    Allure.arret => Famille.arret,
+  };
+
+  /// Chaque allure a une couleur UNIQUE (l'animation retrouve l'allure à
+  /// partir de la couleur d'une transition) : nuances de vert, de bleu ou
+  /// de rouge selon la famille.
   Color get couleur => switch (this) {
-    Allure.pas => const Color(0xFFFFC107), // ambre
-    Allure.pasAllonge => const Color(0xFFFF8F00), // ambre foncé
-    Allure.trot => const Color(0xFF1E88E5), // bleu
-    Allure.galop => const Color(0xFF8E24AA), // violet
-    Allure.arret => const Color(0xFFE53935), // rouge
+    Allure.pas => const Color(0xFFE57373),
+    Allure.pasLibre => const Color(0xFFFF8A65),
+    Allure.pasMoyen => const Color(0xFFFFB74D),
+    Allure.pasAllonge => const Color(0xFFFFD54F),
+    Allure.pasRassemble => const Color(0xFFFBC02D),
+    Allure.trot => const Color(0xFFC0CA33),
+    Allure.trotMoyen => const Color(0xFF8BC34A),
+    Allure.trotAllonge => const Color(0xFF4CAF50),
+    Allure.trotRassemble => const Color(0xFF26A69A),
+    Allure.passage => const Color(0xFF00ACC1),
+    Allure.piaffer => const Color(0xFF00838F),
+    Allure.galop => const Color(0xFF42A5F5),
+    Allure.galopMoyen => const Color(0xFF1E88E5),
+    Allure.galopAllonge => const Color(0xFF1565C0),
+    Allure.galopRassemble => const Color(0xFF3949AB),
+    Allure.arret => const Color(0xFFF44336),
   };
 
   String get label => switch (this) {
     Allure.pas => 'Pas',
+    Allure.pasLibre => 'Pas libre',
+    Allure.pasMoyen => 'Pas moyen',
     Allure.pasAllonge => 'Pas allongé',
-    Allure.trot => 'Trot',
-    Allure.galop => 'Galop',
+    Allure.pasRassemble => 'Pas rassemblé',
+    Allure.trot => 'Trot de travail',
+    Allure.trotMoyen => 'Trot moyen',
+    Allure.trotAllonge => 'Trot allongé',
+    Allure.trotRassemble => 'Trot rassemblé',
+    Allure.passage => 'Passage',
+    Allure.piaffer => 'Piaffer',
+    Allure.galop => 'Galop de travail',
+    Allure.galopMoyen => 'Galop moyen',
+    Allure.galopAllonge => 'Galop allongé',
+    Allure.galopRassemble => 'Galop rassemblé',
     Allure.arret => 'Arrêt',
   };
 
@@ -32,11 +107,42 @@ extension AllureStyle on Allure {
   /// de l'animation du cheval (valeurs indicatives, pas des mesures réelles).
   double get vitesseMetresParSeconde => switch (this) {
     Allure.pas => 1.6,
+    Allure.pasLibre => 1.6,
+    Allure.pasMoyen => 1.6,
     Allure.pasAllonge => 1.9,
+    Allure.pasRassemble => 1.4,
     Allure.trot => 3.2,
+    Allure.trotMoyen => 3.8,
+    Allure.trotAllonge => 4.5,
+    Allure.trotRassemble => 2.6,
+    Allure.passage => 1.8,
+    Allure.piaffer => 0.6,
     Allure.galop => 5.5,
+    Allure.galopMoyen => 6.2,
+    Allure.galopAllonge => 7.0,
+    Allure.galopRassemble => 4.5,
     Allure.arret => 0,
   };
+}
+
+extension FamilleStyle on Famille {
+  String get label => switch (this) {
+    Famille.pas => 'Pas',
+    Famille.trot => 'Trot',
+    Famille.galop => 'Galop',
+    Famille.arret => 'Arrêt',
+  };
+
+  /// Couleur de base de la famille (celle de l'allure "standard").
+  Color get couleur => switch (this) {
+    Famille.pas => Allure.pas.couleur,
+    Famille.trot => Allure.trot.couleur,
+    Famille.galop => Allure.galop.couleur,
+    Famille.arret => Allure.arret.couleur,
+  };
+
+  List<Allure> get allures =>
+      Allure.values.where((a) => a.famille == this).toList();
 }
 
 /// Un repère sur la carrière : soit une lettre officielle, soit un point
@@ -68,12 +174,55 @@ abstract class Mouvement {
 
   List<Transition> get transitions;
 
+  /// Copie de ce mouvement avec une allure, un nom ou des transitions
+  /// différents (les mouvements sont immuables). Pour [MvtArret], l'allure
+  /// et les transitions sont ignorées (un arrêt n'en a pas).
+  Mouvement copyWith({
+    Allure? allure,
+    String? description,
+    List<Transition>? transitions,
+  });
+
   Path buildPath(double w, double h);
 
+  /// true si ce mouvement peut être tracé dans la carrière actuelle : toutes
+  /// ses lettres existent (une reprise créée en 20×60 peut référencer des
+  /// lettres absentes en 20×40 : L, I, R, S, P, V) ET son tracé reste
+  /// entièrement à l'intérieur de la carrière.
+  bool get estCompatibleCarriereActuelle {
+    try {
+      // Échelle identique sur les deux axes (10 px par mètre), pour que la
+      // vérification géométrique ci-dessous soit juste.
+      final w = 10 * Lettres.width;
+      final h = 10 * Lettres.length;
+      final bounds = buildPath(w, h).getBounds();
+      const marge = 1.0;
+      return bounds.left >= -marge &&
+          bounds.top >= -marge &&
+          bounds.right <= w + marge &&
+          bounds.bottom <= h + marge;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Comme [buildPath], mais ne lève jamais d'exception : renvoie null si
+  /// ce mouvement n'est pas compatible avec la carrière actuelle, plutôt
+  /// que de faire planter l'app.
+  Path? buildPathSafe(double w, double h) {
+    try {
+      return buildPath(w, h);
+    } catch (_) {
+      return null;
+    }
+  }
+
   void paintOn(Canvas canvas, double w, double h, {double strokeWidth = 4}) {
+    final path = buildPathSafe(w, h);
+    if (path == null) return; // indiqué dans le bandeau du mouvement
     Transition.draw(
       canvas,
-      buildPath(w, h),
+      path,
       allure.couleur,
       transitions,
       w,
@@ -117,6 +266,18 @@ class MvtLigne extends Mouvement {
   }) : super(description, allure);
 
   @override
+  Mouvement copyWith({
+    Allure? allure,
+    String? description,
+    List<Transition>? transitions,
+  }) => MvtLigne(
+    points,
+    allure ?? this.allure,
+    description ?? this.description,
+    transitions: transitions ?? this.transitions,
+  );
+
+  @override
   Path buildPath(double w, double h) {
     final pixels = points.map((p) => p.toPixels(w, h)).toList();
     final path = Path()..moveTo(pixels.first.dx, pixels.first.dy);
@@ -152,6 +313,20 @@ class MvtCercle extends Mouvement {
   }) : super(description, allure);
 
   @override
+  Mouvement copyWith({
+    Allure? allure,
+    String? description,
+    List<Transition>? transitions,
+  }) => MvtCercle(
+    letter,
+    diameter,
+    allure ?? this.allure,
+    description ?? this.description,
+    prevLetter: prevLetter,
+    transitions: transitions ?? this.transitions,
+  );
+
+  @override
   Path buildPath(double w, double h) {
     final c = Lettres.letterToPixels(letter, w, h);
     final prev = prevLetter == null
@@ -178,6 +353,20 @@ class MvtDemiCercle extends Mouvement {
   }) : super(description, allure);
 
   @override
+  Mouvement copyWith({
+    Allure? allure,
+    String? description,
+    List<Transition>? transitions,
+  }) => MvtDemiCercle(
+    prevLetter,
+    fromLetter,
+    diameter,
+    allure ?? this.allure,
+    description ?? this.description,
+    transitions: transitions ?? this.transitions,
+  );
+
+  @override
   Path buildPath(double w, double h) {
     final prev = Lettres.letterToPixels(prevLetter, w, h);
     final from = Lettres.letterToPixels(fromLetter, w, h);
@@ -202,6 +391,20 @@ class MvtDemiVolte extends Mouvement {
   }) : super(description, allure);
 
   @override
+  Mouvement copyWith({
+    Allure? allure,
+    String? description,
+    List<Transition>? transitions,
+  }) => MvtDemiVolte(
+    fromLetter,
+    toLetter,
+    diameter,
+    allure ?? this.allure,
+    description ?? this.description,
+    transitions: transitions ?? this.transitions,
+  );
+
+  @override
   Path buildPath(double w, double h) {
     final from = Lettres.letterToPixels(fromLetter, w, h);
     final to = Lettres.letterToPixels(toLetter, w, h);
@@ -224,6 +427,20 @@ class MvtDemiVolteRenversee extends Mouvement {
     String description, {
     this.transitions = const [],
   }) : super(description, allure);
+
+  @override
+  Mouvement copyWith({
+    Allure? allure,
+    String? description,
+    List<Transition>? transitions,
+  }) => MvtDemiVolteRenversee(
+    fromLetter,
+    toLetter,
+    diameter,
+    allure ?? this.allure,
+    description ?? this.description,
+    transitions: transitions ?? this.transitions,
+  );
 
   @override
   Path buildPath(double w, double h) {
@@ -269,6 +486,23 @@ class MvtSerpentine extends Mouvement {
   }) : super(description, allure);
 
   @override
+  Mouvement copyWith({
+    Allure? allure,
+    String? description,
+    List<Transition>? transitions,
+  }) => MvtSerpentine(
+    fromLetter,
+    toLetter,
+    nbLoop,
+    allure ?? this.allure,
+    description ?? this.description,
+    prevLetter: prevLetter,
+    premiereBoucleInversee: premiereBoucleInversee,
+    rayonBoucle: rayonBoucle,
+    transitions: transitions ?? this.transitions,
+  );
+
+  @override
   Path buildPath(double w, double h) {
     final from = Lettres.letterToPixels(fromLetter, w, h);
     final to = Lettres.letterToPixels(toLetter, w, h);
@@ -303,6 +537,13 @@ class MvtArret extends Mouvement {
   List<Transition> get transitions => const [];
 
   @override
+  Mouvement copyWith({
+    Allure? allure,
+    String? description,
+    List<Transition>? transitions,
+  }) => MvtArret(letter, description ?? this.description);
+
+  @override
   Path buildPath(double w, double h) {
     final c = Lettres.letterToPixels(letter, w, h);
     return Path()..addOval(Rect.fromCircle(center: c, radius: 1));
@@ -310,7 +551,9 @@ class MvtArret extends Mouvement {
 
   @override
   void paintOn(Canvas canvas, double w, double h, {double strokeWidth = 4}) {
-    final c = Lettres.letterToPixels(letter, w, h);
+    final position = Lettres.getLetterOrNull(letter);
+    if (position == null) return; // lettre absente de cette carrière
+    final c = Lettres.toPixels(position, w, h);
     canvas.drawCircle(c, strokeWidth + 3, Paint()..color = allure.couleur);
   }
 }

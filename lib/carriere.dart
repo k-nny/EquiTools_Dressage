@@ -10,11 +10,15 @@ class _ReprisePainter extends CustomPainter {
   final List<Mouvement> mouvements;
   final int? highlightIndex;
 
+  final TailleCarriere taille = Lettres.taille;
+
   _ReprisePainter(this.mouvements, this.highlightIndex);
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (var i = 0; i < mouvements.length; i++) {
+    final int dernierMouvementVisible = highlightIndex ?? mouvements.length - 1;
+
+    for (var i = 0; i <= dernierMouvementVisible; i++) {
       mouvements[i].paintOn(
         canvas,
         size.width,
@@ -27,7 +31,8 @@ class _ReprisePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ReprisePainter oldDelegate) {
     return oldDelegate.highlightIndex != highlightIndex ||
-        oldDelegate.mouvements != mouvements;
+        oldDelegate.mouvements != mouvements ||
+        oldDelegate.taille != taille;
   }
 }
 

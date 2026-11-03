@@ -3,16 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:reprise_dressage_app/carriere.dart';
 import 'package:reprise_dressage_app/lettres.dart';
 import 'package:reprise_dressage_app/reprise.dart';
+import 'package:reprise_dressage_app/reprise_controller.dart';
 import 'package:reprise_dressage_app/Figures/path_animation.dart';
 import 'package:reprise_dressage_app/Figures/transition.dart';
 import 'package:reprise_dressage_app/mouvement_editor.dart';
-import 'package:reprise_dressage_app/reprise_storage.dart';
 
 /// Un segment du tracé (distances de début/fin en pixels, durée en
 /// secondes déjà mise à l'échelle) — utilisé pour que le cheval
 /// accélère/ralentisse exactement là où la couleur change, sans jamais
 /// désynchroniser la durée totale de l'animation et la distance parcourue.
-typedef _SegmentTiming = (double debut, double fin, double duree);
+typedef _SegmentTiming = (
+  double debut,
+  double fin,
+  double duree,
+  Allure allure,
+);
 
 double _clampD(double v, double lo, double hi) {
   if (lo > hi) return (lo + hi) / 2;
@@ -23,10 +28,19 @@ double _clampD(double v, double lo, double hi) {
 /// cheval le long du mouvement en cours (à une vitesse qui varie selon
 /// l'allure, y compris en cours de mouvement si l'allure change), et
 /// propose Précédent / Lecture / Suivant pour naviguer dans la reprise.
+///
+/// La liste de mouvements elle-même vit dans [controller], partagé avec
+/// d'éventuels panneaux externes (ex. un panneau "Figures" sur PC qui
+/// ajoute des mouvements sans passer par les boutons de ce widget).
 class ReprisePlayer extends StatefulWidget {
-  final List<Mouvement> mouvements;
+  final ReprisePlayerController controller;
+  final bool afficherBoutonsAjouterSupprimer;
 
-  const ReprisePlayer({super.key, required this.mouvements});
+  const ReprisePlayer({
+    super.key,
+    required this.controller,
+    this.afficherBoutonsAjouterSupprimer = true,
+  });
 
   @override
   State<ReprisePlayer> createState() => _ReprisePlayerState();
@@ -37,11 +51,10 @@ class _ReprisePlayerState extends State<ReprisePlayer>
   static const double _horseSize = 28;
 
   late final AnimationController _controller;
-  late List<Mouvement> _mouvements;
 
-  int _currentIndex = 0;
   bool _isPlaying = false;
-  bool _chargementTermine = false;
+  double _vitesse = 1;
+  int _dureeBaseMs = 1000;
 
   double _w = 0;
   double _h = 0;
@@ -49,33 +62,31 @@ class _ReprisePlayerState extends State<ReprisePlayer>
   @override
   void initState() {
     super.initState();
-    _mouvements = List.of(widget.mouvements);
     _controller = AnimationController(vsync: this)
       ..addStatusListener(_onStatusChanged);
-    _chargerDepuisStockage();
+    widget.controller.addListener(_onListeChangee);
   }
 
-  /// Reprend la reprise sauvegardée sur cet appareil, si elle existe.
-  /// Sinon, garde celle passée en paramètre (l'exemple par défaut).
-  Future<void> _chargerDepuisStockage() async {
-    final sauvegarde = await ReprisesStorage.chargerReprise();
-    if (!mounted) return;
-    setState(() {
-      if (sauvegarde != null) {
-        _mouvements = sauvegarde;
-        _currentIndex = 0;
-      }
-      _chargementTermine = true;
-    });
-  }
+  /// La liste ou la position courante a changé (ajout/suppression/
+  /// navigation, que ce soit depuis les boutons de ce widget ou depuis un
+  /// panneau externe) : on arrête toute animation en cours et on repart du
+  /// début du nouveau mouvement courant.
+  void _onListeChangee() {
+    _controller.stop();
+    _controller.value = 0;
 
-  void _sauvegarder() {
-    ReprisesStorage.sauvegarderReprise(_mouvements);
+    if (_isPlaying) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_isPlaying || widget.controller.estVide) return;
+        _playCurrent();
+      });
+    }
   }
 
   @override
   void dispose() {
     _controller.removeStatusListener(_onStatusChanged);
+    widget.controller.removeListener(_onListeChangee);
     _controller.dispose();
     super.dispose();
   }
@@ -85,12 +96,6 @@ class _ReprisePlayerState extends State<ReprisePlayer>
       _advance();
     }
   }
-
-  bool get _estVide => _mouvements.isEmpty;
-  Mouvement get _current => _mouvements[_currentIndex];
-
-  bool get _isLast => _currentIndex == _mouvements.length - 1;
-  bool get _isFirst => _currentIndex == 0;
 
   /// Découpe le tracé du mouvement en segments (un par allure, coupés
   /// exactement aux points de transition de couleur), avec pour chacun sa
@@ -132,40 +137,71 @@ class _ReprisePlayerState extends State<ReprisePlayer>
 
     final timings = <_SegmentTiming>[];
     for (var i = 0; i < bornes.length; i++) {
-      final (segStart, segEnd, _) = bornes[i];
-      timings.add((segStart, segEnd, rawDurations[i] * scale));
+      final (segStart, segEnd, allureSeg) = bornes[i];
+      timings.add((segStart, segEnd, rawDurations[i] * scale, allureSeg));
     }
 
     return (timings, totalSeconds);
   }
 
   void _advance() {
-    if (_estVide) return;
-    if (_isLast) {
+    final controller = widget.controller;
+
+    if (controller.estVide) return;
+
+    if (controller.estDernier) {
       setState(() => _isPlaying = false);
       return;
     }
-    setState(() => _currentIndex++);
-    _playCurrent();
+
+    controller.allerA(controller.currentIndex + 1);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_isPlaying || controller.estVide) return;
+      _playCurrent();
+    });
   }
 
   void _playCurrent() {
-    if (_estVide || _w == 0 || _h == 0) return;
+    final controller = widget.controller;
+    if (controller.estVide || _w == 0 || _h == 0) return;
 
-    final mvt = _current;
+    final mvt = controller.courant;
     if (mvt is MvtArret) {
-      _controller.duration = const Duration(milliseconds: 1600);
+      _dureeBaseMs = 1600;
     } else {
-      final (_, totalSeconds) = _profilVitesse(mvt, mvt.buildPath(_w, _h));
-      _controller.duration = Duration(
-        milliseconds: (totalSeconds * 1000).round(),
-      );
+      final path = mvt.buildPathSafe(_w, _h);
+      if (path == null) {
+        // Mouvement incompatible avec la carrière actuelle : on ne
+        // l'anime pas, on passe simplement au suivant après un instant.
+        _dureeBaseMs = 800;
+      } else {
+        final (_, totalSeconds) = _profilVitesse(mvt, path);
+        _dureeBaseMs = (totalSeconds * 1000).round();
+      }
     }
+    _controller.duration = Duration(milliseconds: _dureeAvecVitesse());
     _controller.forward(from: 0);
   }
 
+  /// Durée réelle du mouvement en cours, une fois la vitesse (1×, 2×, 4×)
+  /// appliquée : toute l'animation accélère, le cheval ne "saute" pas.
+  int _dureeAvecVitesse() {
+    final ms = (_dureeBaseMs / _vitesse).round();
+    return ms < 40 ? 40 : ms;
+  }
+
+  void _changerVitesse(double v) {
+    setState(() => _vitesse = v);
+    if (_isPlaying) {
+      _controller.duration = Duration(milliseconds: _dureeAvecVitesse());
+      _controller.forward(); // reprend là où il en est, à la nouvelle vitesse
+    }
+  }
+
   void _togglePlay() {
-    if (_estVide) return;
+    final controller = widget.controller;
+    if (controller.estVide) return;
     if (_isPlaying) {
       _controller.stop();
       setState(() => _isPlaying = false);
@@ -180,163 +216,179 @@ class _ReprisePlayerState extends State<ReprisePlayer>
     }
   }
 
-  void _goTo(int index) {
-    if (_estVide) return;
-    _controller.stop();
-    setState(() {
-      _isPlaying = false;
-      _currentIndex = index.clamp(0, _mouvements.length - 1).toInt();
-    });
-    _controller.value = 0;
-  }
+  void _goTo(int index) => widget.controller.allerA(index);
 
   Future<void> _ajouterFigure() async {
     final mvt = await showMouvementEditor(context);
     if (mvt == null || !mounted) return;
-    _controller.stop();
-    setState(() {
-      _isPlaying = false;
-      final insertAt = _estVide ? 0 : _currentIndex + 1;
-      _mouvements.insert(insertAt, mvt);
-      _currentIndex = insertAt;
-    });
-    _controller.value = 0;
-    _sauvegarder();
+    widget.controller.ajouter(mvt);
   }
 
-  void _supprimerCourant() {
-    if (_estVide) return;
-    _controller.stop();
-    setState(() {
-      _isPlaying = false;
-      _mouvements.removeAt(_currentIndex);
-      if (_mouvements.isEmpty) {
-        _currentIndex = 0;
-      } else if (_currentIndex >= _mouvements.length) {
-        _currentIndex = _mouvements.length - 1;
-      }
-    });
-    _controller.value = 0;
-    _sauvegarder();
-  }
+  void _supprimerCourant() => widget.controller.supprimerCourant();
 
   PathPoint _horsePosition() {
-    if (_estVide) return const PathPoint(Offset.zero, 0);
-    final mvt = _current;
+    final controller = widget.controller;
+    if (controller.estVide) return const PathPoint(Offset.zero, 0);
+    final mvt = controller.courant;
     if (mvt is MvtArret) {
-      return PathPoint(Lettres.letterToPixels(mvt.letter, _w, _h), 0);
+      final position = Lettres.getLetterOrNull(mvt.letter);
+      if (position == null) return const PathPoint(Offset.zero, 0);
+      return PathPoint(Lettres.toPixels(position, _w, _h), 0);
     }
 
-    final path = mvt.buildPath(_w, _h);
+    final path = mvt.buildPathSafe(_w, _h);
+    if (path == null) return const PathPoint(Offset.zero, 0);
     final (timings, totalSeconds) = _profilVitesse(mvt, path);
     if (timings.isEmpty || totalSeconds == 0) {
       return PathAnimation.pointAtFraction(path, _controller.value) ??
           const PathPoint(Offset.zero, 0);
     }
 
-    final elapsed = _controller.value * totalSeconds;
+    final (distance, _) = _distanceEtAllure(timings, totalSeconds);
+    return PathAnimation.pointAtDistance(path, distance) ??
+        const PathPoint(Offset.zero, 0);
+  }
 
+  /// Distance parcourue (en pixels) et allure du segment en cours, selon
+  /// l'avancement de l'animation.
+  (double, Allure) _distanceEtAllure(
+    List<_SegmentTiming> timings,
+    double totalSeconds,
+  ) {
+    final elapsed = _controller.value * totalSeconds;
     double distance = timings.last.$2;
+    Allure allure = timings.last.$4;
     double t = 0;
     for (var i = 0; i < timings.length; i++) {
-      final (segStart, segEnd, segDuration) = timings[i];
+      final (segStart, segEnd, segDuration, segAllure) = timings[i];
       final isLast = i == timings.length - 1;
 
       if (elapsed <= t + segDuration || isLast) {
         final localElapsed = _clampD(elapsed - t, 0, segDuration);
         final fraction = segDuration > 0 ? localElapsed / segDuration : 0.0;
         distance = segStart + fraction * (segEnd - segStart);
+        allure = segAllure;
         break;
       }
       t += segDuration;
     }
+    return (distance, allure);
+  }
 
-    return PathAnimation.pointAtDistance(path, distance) ??
-        const PathPoint(Offset.zero, 0);
+  /// Allure à afficher dans le bandeau : celle du mouvement, ou — pendant
+  /// la lecture d'un mouvement qui change d'allure — celle du moment.
+  Allure _allureAffichee() {
+    final controller = widget.controller;
+    if (controller.estVide) return Allure.arret;
+    final mvt = controller.courant;
+    if (mvt is MvtArret) return Allure.arret;
+    if (mvt.transitions.isEmpty || _w == 0 || _h == 0) return mvt.allure;
+    final path = mvt.buildPathSafe(_w, _h);
+    if (path == null) return mvt.allure;
+    final (timings, totalSeconds) = _profilVitesse(mvt, path);
+    if (timings.isEmpty || totalSeconds == 0) return mvt.allure;
+    return _distanceEtAllure(timings, totalSeconds).$2;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_chargementTermine) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    return Column(
-      children: [
-        _MouvementBandeau(
-          index: _currentIndex,
-          total: _mouvements.length,
-          mouvement: _estVide ? null : _current,
-        ),
-        const SizedBox(height: 10),
-        Expanded(
-          child: Center(
-            child: AspectRatio(
-              aspectRatio: 1 / 3,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  _w = constraints.maxWidth;
-                  _h = constraints.maxHeight;
-
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Carriere(
-                        mouvements: _mouvements,
-                        highlightIndex: _estVide ? null : _currentIndex,
-                      ),
-                      if (!_estVide)
-                        AnimatedBuilder(
-                          animation: _controller,
-                          builder: (context, _) {
-                            final point = _horsePosition();
-                            return Positioned(
-                              left: point.position.dx - _horseSize / 2,
-                              top: point.position.dy - _horseSize / 2,
-                              child: const IgnorePointer(
-                                child: Text(
-                                  '🐴',
-                                  style: TextStyle(fontSize: _horseSize),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                    ],
-                  );
-                },
+    return AnimatedBuilder(
+      animation: widget.controller,
+      builder: (context, _) {
+        final controller = widget.controller;
+        if (!controller.chargementTermine) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return Column(
+          children: [
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) => _MouvementBandeau(
+                index: controller.currentIndex,
+                total: controller.mouvements.length,
+                mouvement: controller.estVide ? null : controller.courant,
+                allure: _allureAffichee(),
               ),
             ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        _Controles(
-          isPlaying: _isPlaying,
-          canPrevious: !_estVide && !_isFirst,
-          canNext: !_estVide && !_isLast,
-          canPlay: !_estVide,
-          canDelete: !_estVide,
-          onPrevious: () => _goTo(_currentIndex - 1),
-          onNext: () => _goTo(_currentIndex + 1),
-          onPlayPause: _togglePlay,
-          onAdd: _ajouterFigure,
-          onDelete: _supprimerCourant,
-        ),
-      ],
+            const SizedBox(height: 10),
+            Expanded(
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: Lettres.width / Lettres.length,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      _w = constraints.maxWidth;
+                      _h = constraints.maxHeight;
+
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Carriere(
+                            mouvements: controller.mouvements,
+                            highlightIndex: controller.estVide
+                                ? null
+                                : controller.currentIndex,
+                          ),
+                          if (!controller.estVide)
+                            AnimatedBuilder(
+                              animation: _controller,
+                              builder: (context, _) {
+                                final point = _horsePosition();
+                                return Positioned(
+                                  left: point.position.dx - _horseSize / 2,
+                                  top: point.position.dy - _horseSize / 2,
+                                  child: const IgnorePointer(
+                                    child: Text(
+                                      '🐴',
+                                      style: TextStyle(fontSize: _horseSize),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _Controles(
+              isPlaying: _isPlaying,
+              vitesse: _vitesse,
+              onVitesse: _changerVitesse,
+              canPrevious: !controller.estVide && !controller.estPremier,
+              canNext: !controller.estVide && !controller.estDernier,
+              canPlay: !controller.estVide,
+              canDelete: !controller.estVide,
+              afficherAjouterSupprimer: widget.afficherBoutonsAjouterSupprimer,
+              onPrevious: () => _goTo(controller.currentIndex - 1),
+              onNext: () => _goTo(controller.currentIndex + 1),
+              onPlayPause: _togglePlay,
+              onAdd: _ajouterFigure,
+              onDelete: _supprimerCourant,
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
 class _MouvementBandeau extends StatelessWidget {
-  static const double _hauteur = 76;
+  static const double _hauteur = 100;
 
   final int index;
   final int total;
   final Mouvement? mouvement;
+  final Allure allure;
 
   const _MouvementBandeau({
     required this.index,
     required this.total,
     required this.mouvement,
+    required this.allure,
   });
 
   @override
@@ -358,6 +410,29 @@ class _MouvementBandeau extends StatelessWidget {
       );
     }
 
+    if (!mvt.estCompatibleCarriereActuelle) {
+      return SizedBox(
+        height: _hauteur,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              '⚠️ « ${mvt.description} » ne peut pas être tracé dans cette '
+              'carrière (lettre absente ou figure trop grande).',
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.deepOrange,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: _hauteur,
       child: Padding(
@@ -366,34 +441,38 @@ class _MouvementBandeau extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Mouvement ${index + 1} / $total',
+              'Figure ${index + 1} sur $total',
               style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              mvt.description,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      color: mvt.allure.couleur,
-                      shape: BoxShape.circle,
-                    ),
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: allure.couleur,
+                    shape: BoxShape.circle,
                   ),
                 ),
+                const SizedBox(width: 6),
                 Flexible(
                   child: Text(
-                    mvt.description,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
+                    allure == Allure.arret
+                        ? 'Arrêt'
+                        : 'Allure : ${allure.label}',
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -409,10 +488,13 @@ class _MouvementBandeau extends StatelessWidget {
 
 class _Controles extends StatelessWidget {
   final bool isPlaying;
+  final double vitesse;
   final bool canPrevious;
   final bool canNext;
   final bool canPlay;
   final bool canDelete;
+  final bool afficherAjouterSupprimer;
+  final ValueChanged<double> onVitesse;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
   final VoidCallback onPlayPause;
@@ -421,10 +503,13 @@ class _Controles extends StatelessWidget {
 
   const _Controles({
     required this.isPlaying,
+    required this.vitesse,
     required this.canPrevious,
     required this.canNext,
     required this.canPlay,
     required this.canDelete,
+    required this.afficherAjouterSupprimer,
+    required this.onVitesse,
     required this.onPrevious,
     required this.onNext,
     required this.onPlayPause,
@@ -440,56 +525,82 @@ class _Controles extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconButton(
-              iconSize: 32,
+              iconSize: 36,
+              tooltip: 'Figure précédente',
               icon: const Icon(Icons.skip_previous),
               onPressed: canPrevious ? onPrevious : null,
             ),
             const SizedBox(width: 8),
             IconButton.filled(
-              iconSize: 32,
+              iconSize: 36,
+              tooltip: isPlaying ? 'Pause' : 'Lecture',
               icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
               onPressed: canPlay ? onPlayPause : null,
             ),
             const SizedBox(width: 8),
             IconButton(
-              iconSize: 32,
+              iconSize: 36,
+              tooltip: 'Figure suivante',
               icon: const Icon(Icons.skip_next),
               onPressed: canNext ? onNext : null,
             ),
           ],
         ),
         const SizedBox(height: 4),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onAdd,
-                  icon: const Icon(Icons.add),
-                  label: const Text(
-                    'Ajouter',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: canDelete ? onDelete : null,
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text(
-                    'Supprimer',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Vitesse :',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(width: 8),
+            SegmentedButton<double>(
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment(value: 1.0, label: Text('1×')),
+                ButtonSegment(value: 2.0, label: Text('2×')),
+                ButtonSegment(value: 4.0, label: Text('4×')),
+              ],
+              selected: {vitesse},
+              onSelectionChanged: (s) => onVitesse(s.first),
+            ),
+          ],
         ),
+        if (afficherAjouterSupprimer) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onAdd,
+                    icon: const Icon(Icons.add),
+                    label: const Text(
+                      'Ajouter',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: canDelete ? onDelete : null,
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text(
+                      'Supprimer',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }

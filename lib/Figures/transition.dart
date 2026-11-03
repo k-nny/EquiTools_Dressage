@@ -116,7 +116,14 @@ class Transition {
     for (final t in transitions) {
       double offset = 0;
       for (final metric in allMetrics) {
-        final cutAt = t.findCutDistance(metric, w, h);
+        double? cutAt;
+        try {
+          cutAt = t.findCutDistance(metric, w, h);
+        } catch (_) {
+          // Lettre de la transition absente de la carrière actuelle
+          // (ex. 'L' en 20×40) : on ignore simplement cette transition.
+          break;
+        }
         if (cutAt != null) {
           cuts.add((offset + cutAt, t.colorAfter));
           break;

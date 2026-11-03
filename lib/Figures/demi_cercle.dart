@@ -31,6 +31,28 @@ class DemiCercle extends CustomPainter {
     final diameterPx = diameter / Lettres.width * w;
     final radius = diameterPx / 2;
 
+    // Lettre sur un petit côté (A ou C) : le demi-cercle part du centre du
+    // petit côté, dans le sens d'où l'on vient, et rentre dans la carrière
+    // (diamètre perpendiculaire au petit côté, bombé sur le côté).
+    if (fromLetter.dy == 0 || fromLetter.dy == h) {
+      final enHaut = fromLetter.dy == 0;
+      final versGauche = prevLetter.dx > fromLetter.dx; // on vient de la droite
+      final centre = Offset(
+        fromLetter.dx,
+        enHaut ? fromLetter.dy + radius : fromLetter.dy - radius,
+      );
+      final angleDepart = enHaut ? -3.14 / 2 : 3.14 / 2;
+      // En haut : sens négatif = vers la gauche ; en bas : l'inverse.
+      final sensCourt = (enHaut == versGauche) ? -3.14 : 3.14;
+      return Path()
+        ..arcTo(
+          Rect.fromCircle(center: centre, radius: radius),
+          angleDepart,
+          sensCourt,
+          false,
+        );
+    }
+
     double radiusSide;
     double startAngle;
     double sens;

@@ -79,11 +79,10 @@ class _AdBannerState extends State<AdBanner> {
     // l'écran (téléphone comme tablette), avec la hauteur optimale que
     // Google calcule pour cette largeur.
     final largeur = MediaQuery.sizeOf(context).width.truncate();
-    final taille =
-      await AdSize.getAnchoredAdaptiveBannerAdSize(
-        Orientation.portrait,
-        largeur,
-      );
+    final taille = await AdSize.getAnchoredAdaptiveBannerAdSize(
+      Orientation.portrait,
+      largeur,
+    );
 
     if (!mounted) return;
     if (taille == null) {
