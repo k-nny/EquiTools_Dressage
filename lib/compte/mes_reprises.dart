@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart' show FirebaseException;
 import 'package:flutter/material.dart';
 
 import 'package:reprise_dressage_app/compte/service_reprises_cloud.dart';
@@ -34,10 +35,10 @@ class _MesReprisesState extends State<MesReprises> {
     try {
       final liste = await ServiceReprisesCloud.charger();
       if (mounted) setState(() => _liste = liste);
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() {
-          _erreur = 'Impossible de charger vos reprises. Vérifiez votre connexion.';
+          _erreur = 'Impossible de charger vos reprises${_detail(e)}.';
         });
       }
     } finally {
@@ -62,12 +63,19 @@ class _MesReprisesState extends State<MesReprises> {
           _info = messageOk;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _erreur = 'La sauvegarde a échoué. Réessayez.');
+    } catch (e) {
+      if (mounted) {
+        setState(() => _erreur = 'La sauvegarde a échoué${_detail(e)}.');
+      }
     } finally {
       if (mounted) setState(() => _occupe = false);
     }
   }
+
+  /// Code d'erreur Firebase entre parenthèses (aide au diagnostic), ex.
+  /// « permission-denied » = règles Firestore non publiées,
+  /// « not-found » = base Firestore non créée.
+  String _detail(Object e) => e is FirebaseException ? ' (${e.code})' : '';
 
   Future<bool> _confirmer(String titre, String texte, String bouton) async {
     final ok = await showDialog<bool>(
