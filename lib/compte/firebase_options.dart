@@ -13,7 +13,7 @@ const FirebaseOptions _web = FirebaseOptions(
   apiKey: "AIzaSyBsSj1yJix68WceZs2YD25mPi3s8pmgxnc",
   appId: "equitools---dressage-4e247.firebaseapp.com",
   messagingSenderId: "equitools---dressage-4e247",
-  projectId: "equitools---dressage-4e247.firebasestorage.app",
+  projectId: "equitools---dressage-4e247",
   authDomain: "909299718058",
   storageBucket: "1:909299718058:web:576caa217cdaf2f7cf3dd3",
 );
