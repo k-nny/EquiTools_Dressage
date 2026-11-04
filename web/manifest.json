@@ -1,11 +1,11 @@
 {
-    "name": "reprise_dressage_app",
-    "short_name": "reprise_dressage_app",
+    "name": "EquiTools - Dressage",
+    "short_name": "EquiTools",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Dessinez, animez et exportez en PDF votre reprise de dressage.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

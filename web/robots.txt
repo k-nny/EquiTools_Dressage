@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://equi-tools-dressage.vercel.app/sitemap.xml

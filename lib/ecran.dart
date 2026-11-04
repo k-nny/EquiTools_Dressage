@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'ads/ad_banner.dart';
+import 'pages_info.dart';
 import 'panels/allures_panel.dart';
 import 'panels/figures_panel.dart';
 import 'panels/reprise_list.dart';
@@ -141,6 +142,7 @@ class _EcranState extends State<Ecran> {
             icon: const Icon(Icons.refresh),
             onPressed: _reinitialiser,
           ),
+          const MenuInfos(),
         ],
       ),
       body: SafeArea(
@@ -183,7 +185,7 @@ class _EcranState extends State<Ecran> {
 
             // Petit espace pour ne pas coller la pub aux boutons du
             // lecteur juste au-dessus (cf. contrainte n°10).
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
 
             // 📢 zone publicitaire dédiée, sous le contenu — jamais par
             // dessus (pas de Stack/Positioned ici). N'affiche rien pour

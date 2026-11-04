@@ -47,6 +47,9 @@ dependencies:
   pdf: ^3.11.1
   printing: ^5.13.2
 
+  # Ouverture des pages d'information (guide, confidentialité...).
+  url_launcher: ^6.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
