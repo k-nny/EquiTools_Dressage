@@ -36,10 +36,17 @@ class ReprisePlayer extends StatefulWidget {
   final ReprisePlayerController controller;
   final bool afficherBoutonsAjouterSupprimer;
 
+  /// Mise en page "téléphone" : la carrière (très haute et étroite, 20×60)
+  /// est placée à gauche et prend toute la hauteur disponible, et le
+  /// bandeau + les contrôles sont empilés à sa droite, au lieu d'être
+  /// au-dessus et en dessous (ce qui écrasait la carrière).
+  final bool controlesALCote;
+
   const ReprisePlayer({
     super.key,
     required this.controller,
     this.afficherBoutonsAjouterSupprimer = true,
+    this.controlesALCote = false,
   });
 
   @override
@@ -299,76 +306,111 @@ class _ReprisePlayerState extends State<ReprisePlayer>
         if (!controller.chargementTermine) {
           return const Center(child: CircularProgressIndicator());
         }
-        return Column(
-          children: [
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (context, _) => _MouvementBandeau(
-                index: controller.currentIndex,
-                total: controller.mouvements.length,
-                mouvement: controller.estVide ? null : controller.courant,
-                allure: _allureAffichee(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: Center(
-                child: AspectRatio(
-                  aspectRatio: Lettres.width / Lettres.length,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      _w = constraints.maxWidth;
-                      _h = constraints.maxHeight;
+        final compact = widget.controlesALCote;
 
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Carriere(
-                            mouvements: controller.mouvements,
-                            highlightIndex: controller.estVide
-                                ? null
-                                : controller.currentIndex,
-                          ),
-                          if (!controller.estVide)
-                            AnimatedBuilder(
-                              animation: _controller,
-                              builder: (context, _) {
-                                final point = _horsePosition();
-                                return Positioned(
-                                  left: point.position.dx - _horseSize / 2,
-                                  top: point.position.dy - _horseSize / 2,
-                                  child: const IgnorePointer(
-                                    child: Text(
-                                      '🐴',
-                                      style: TextStyle(fontSize: _horseSize),
-                                    ),
-                                  ),
-                                );
-                              },
+        final bandeau = AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) => _MouvementBandeau(
+            index: controller.currentIndex,
+            total: controller.mouvements.length,
+            mouvement: controller.estVide ? null : controller.courant,
+            allure: _allureAffichee(),
+            compact: compact,
+          ),
+        );
+
+        final carriere = Center(
+          child: AspectRatio(
+            aspectRatio: Lettres.width / Lettres.length,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                _w = constraints.maxWidth;
+                _h = constraints.maxHeight;
+
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Carriere(
+                      mouvements: controller.mouvements,
+                      highlightIndex: controller.estVide
+                          ? null
+                          : controller.currentIndex,
+                    ),
+                    if (!controller.estVide)
+                      AnimatedBuilder(
+                        animation: _controller,
+                        builder: (context, _) {
+                          final point = _horsePosition();
+                          return Positioned(
+                            left: point.position.dx - _horseSize / 2,
+                            top: point.position.dy - _horseSize / 2,
+                            child: const IgnorePointer(
+                              child: Text(
+                                '🐴',
+                                style: TextStyle(fontSize: _horseSize),
+                              ),
                             ),
-                        ],
-                      );
-                    },
+                          );
+                        },
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+
+        final controles = _Controles(
+          isPlaying: _isPlaying,
+          vitesse: _vitesse,
+          onVitesse: _changerVitesse,
+          canPrevious: !controller.estVide && !controller.estPremier,
+          canNext: !controller.estVide && !controller.estDernier,
+          canPlay: !controller.estVide,
+          canDelete: !controller.estVide,
+          afficherAjouterSupprimer: widget.afficherBoutonsAjouterSupprimer,
+          compact: compact,
+          onPrevious: () => _goTo(controller.currentIndex - 1),
+          onNext: () => _goTo(controller.currentIndex + 1),
+          onPlayPause: _togglePlay,
+          onAdd: _ajouterFigure,
+          onDelete: _supprimerCourant,
+        );
+
+        if (compact) {
+          // Carrière à gauche (marges pour les lettres A, C et celles des
+          // côtés, qui sont dessinées à l'extérieur du rectangle), bandeau
+          // et contrôles à droite.
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 11,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 30, 20, 30),
+                  child: carriere,
+                ),
+              ),
+              Expanded(
+                flex: 9,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(0, 8, 12, 8),
+                  child: Column(
+                    children: [bandeau, const SizedBox(height: 8), controles],
                   ),
                 ),
               ),
-            ),
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            bandeau,
             const SizedBox(height: 10),
-            _Controles(
-              isPlaying: _isPlaying,
-              vitesse: _vitesse,
-              onVitesse: _changerVitesse,
-              canPrevious: !controller.estVide && !controller.estPremier,
-              canNext: !controller.estVide && !controller.estDernier,
-              canPlay: !controller.estVide,
-              canDelete: !controller.estVide,
-              afficherAjouterSupprimer: widget.afficherBoutonsAjouterSupprimer,
-              onPrevious: () => _goTo(controller.currentIndex - 1),
-              onNext: () => _goTo(controller.currentIndex + 1),
-              onPlayPause: _togglePlay,
-              onAdd: _ajouterFigure,
-              onDelete: _supprimerCourant,
-            ),
+            Expanded(child: carriere),
+            const SizedBox(height: 10),
+            controles,
           ],
         );
       },
@@ -377,30 +419,38 @@ class _ReprisePlayerState extends State<ReprisePlayer>
 }
 
 class _MouvementBandeau extends StatelessWidget {
-  static const double _hauteur = 100;
+  static const double _hauteurFixe = 100;
 
   final int index;
   final int total;
   final Mouvement? mouvement;
   final Allure allure;
 
+  /// Mode "à côté de la carrière" : pas de hauteur fixe (le texte peut
+  /// passer sur plusieurs lignes dans la colonne étroite).
+  final bool compact;
+
   const _MouvementBandeau({
     required this.index,
     required this.total,
     required this.mouvement,
     required this.allure,
+    this.compact = false,
   });
+
+  double? get _hauteur => compact ? null : _hauteurFixe;
+  double get _margeH => compact ? 4 : 16;
 
   @override
   Widget build(BuildContext context) {
     final mvt = mouvement;
     if (mvt == null) {
-      return const SizedBox(
+      return SizedBox(
         height: _hauteur,
         child: Center(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
+            padding: EdgeInsets.symmetric(horizontal: _margeH),
+            child: const Text(
               'Aucune figure — ajoutez-en une avec le bouton "+"',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: Colors.grey),
@@ -415,12 +465,12 @@ class _MouvementBandeau extends StatelessWidget {
         height: _hauteur,
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: _margeH),
             child: Text(
               '⚠️ « ${mvt.description} » ne peut pas être tracé dans cette '
               'carrière (lettre absente ou figure trop grande).',
               textAlign: TextAlign.center,
-              maxLines: 3,
+              maxLines: compact ? 8 : 3,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 14,
@@ -436,7 +486,7 @@ class _MouvementBandeau extends StatelessWidget {
     return SizedBox(
       height: _hauteur,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.symmetric(horizontal: _margeH),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -448,9 +498,12 @@ class _MouvementBandeau extends StatelessWidget {
             Text(
               mvt.description,
               textAlign: TextAlign.center,
-              maxLines: 2,
+              maxLines: compact ? 6 : 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: compact ? 15 : 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 4),
             Row(
@@ -494,6 +547,10 @@ class _Controles extends StatelessWidget {
   final bool canPlay;
   final bool canDelete;
   final bool afficherAjouterSupprimer;
+
+  /// Mode étroit (à droite de la carrière sur téléphone) : boutons
+  /// empilés et vitesse sous son libellé.
+  final bool compact;
   final ValueChanged<double> onVitesse;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
@@ -509,6 +566,7 @@ class _Controles extends StatelessWidget {
     required this.canPlay,
     required this.canDelete,
     required this.afficherAjouterSupprimer,
+    this.compact = false,
     required this.onVitesse,
     required this.onPrevious,
     required this.onNext,
@@ -517,8 +575,77 @@ class _Controles extends StatelessWidget {
     required this.onDelete,
   });
 
+  Widget _buildCompact() {
+    return Column(
+      children: [
+        Wrap(
+          alignment: WrapAlignment.center,
+          children: [
+            IconButton(
+              iconSize: 32,
+              tooltip: 'Figure précédente',
+              icon: const Icon(Icons.skip_previous),
+              onPressed: canPrevious ? onPrevious : null,
+            ),
+            IconButton.filled(
+              iconSize: 32,
+              tooltip: isPlaying ? 'Pause' : 'Lecture',
+              icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+              onPressed: canPlay ? onPlayPause : null,
+            ),
+            IconButton(
+              iconSize: 32,
+              tooltip: 'Figure suivante',
+              icon: const Icon(Icons.skip_next),
+              onPressed: canNext ? onNext : null,
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        const Text('Vitesse :', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 4),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: SegmentedButton<double>(
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment(value: 1.0, label: Text('1×')),
+              ButtonSegment(value: 2.0, label: Text('2×')),
+              ButtonSegment(value: 4.0, label: Text('4×')),
+            ],
+            selected: {vitesse},
+            onSelectionChanged: (s) => onVitesse(s.first),
+          ),
+        ),
+        if (afficherAjouterSupprimer) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add),
+              label: const Text('Ajouter', overflow: TextOverflow.ellipsis),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: canDelete ? onDelete : null,
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Supprimer', overflow: TextOverflow.ellipsis),
+              style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (compact) return _buildCompact();
+
     return Column(
       children: [
         Row(

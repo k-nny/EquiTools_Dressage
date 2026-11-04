@@ -263,7 +263,7 @@ class _MiseEnPageTelephone extends StatelessWidget {
 
         // 🐴 carrière + lecteur de reprise
         Expanded(
-          child: ReprisePlayer(controller: controller),
+          child: ReprisePlayer(controller: controller, controlesALCote: true),
         ),
 
         // 📋 liste de la reprise  ·  🐎 allures de la figure choisie
