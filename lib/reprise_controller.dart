@@ -146,6 +146,15 @@ class ReprisePlayerController extends ChangeNotifier {
   /// redessine tout et arrête l'animation en cours.
   void carriereChangee() => notifyListeners();
 
+  /// Remplace toute la reprise (ex. une reprise chargée depuis le compte),
+  /// et la sauvegarde localement.
+  void remplacerReprise(List<Mouvement> nouvelle) {
+    mouvements = List.of(nouvelle);
+    currentIndex = 0;
+    _sauvegarder();
+    notifyListeners();
+  }
+
   /// Efface la reprise sauvegardée sur cet appareil et revient à l'exemple
   /// par défaut.
   Future<void> reinitialiser() async {

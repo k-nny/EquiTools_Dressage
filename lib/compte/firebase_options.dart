@@ -10,12 +10,12 @@ const String _aRemplacer = 'A_REMPLACER';
 /// Application Web (console Firebase → Paramètres du projet → Vos
 /// applications → Web → « Configuration du SDK »).
 const FirebaseOptions _web = FirebaseOptions(
-  apiKey: "AIzaSyBsSj1yJix68WceZs2YD25mPi3s8pmgxnc",
-  appId: "equitools---dressage-4e247.firebaseapp.com",
-  messagingSenderId: "equitools---dressage-4e247",
-  projectId: "equitools---dressage-4e247.firebasestorage.app",
-  authDomain: "909299718058",
-  storageBucket: "1:909299718058:web:576caa217cdaf2f7cf3dd3",
+  apiKey: _aRemplacer,
+  appId: _aRemplacer,
+  messagingSenderId: _aRemplacer,
+  projectId: _aRemplacer,
+  authDomain: _aRemplacer,
+  storageBucket: _aRemplacer,
 );
 
 /// Application Android (optionnel tant que l'appli n'est pas publiée).

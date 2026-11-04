@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Chaque utilisateur ne peut lire/écrire que son propre document, et
+    // il ne peut pas contenir plus de 3 reprises.
+    match /users/{userId} {
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['reprises'])
+        && request.resource.data.reprises is list
+        && request.resource.data.reprises.size() <= 3;
+    }
+  }
+}

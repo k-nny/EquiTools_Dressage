@@ -150,7 +150,7 @@ class _EcranState extends State<Ecran> {
                       ? Icons.account_circle
                       : Icons.account_circle_outlined,
                 ),
-                onPressed: () => ouvrirCompte(context),
+                onPressed: () => ouvrirCompte(context, _controller),
               );
             },
           ),

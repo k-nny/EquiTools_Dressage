@@ -231,3 +231,15 @@ Transition _transitionFromJson(Map<String, dynamic> json) {
     color,
   );
 }
+
+// --- Accès public à la sérialisation (sauvegarde dans le compte) ---------
+
+/// Convertit une liste de mouvements en JSON (même format que la
+/// sauvegarde locale).
+List<Map<String, dynamic>> mouvementsVersJson(List<Mouvement> mouvements) =>
+    mouvements.map(_mouvementToJson).toList();
+
+/// Opération inverse de [mouvementsVersJson].
+List<Mouvement> mouvementsDepuisJson(List liste) => liste
+    .map((e) => _mouvementFromJson(Map<String, dynamic>.from(e as Map)))
+    .toList();

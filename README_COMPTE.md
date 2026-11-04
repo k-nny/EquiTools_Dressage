@@ -25,3 +25,11 @@ compte n'apparaît.
 Quotas gratuits (Spark) : l'authentification par e-mail est gratuite ;
 Firestore (étape suivante, sauvegarde des 3 reprises) offre 1 Go et
 50 000 lectures / 20 000 écritures par jour, sans mise en pause du projet.
+
+## Sauvegarde des 3 reprises (Firestore)
+
+1. Console Firebase → rechercher **Firestore Database** → **Créer une base de données**.
+2. Emplacement : `eur3 (Europe)` (ne peut pas être changé ensuite).
+3. Mode : **Production**. Créer.
+4. Onglet **Règles** : remplacer tout le contenu par celui du fichier
+   `firestore.rules` de ce projet, puis **Publier**.

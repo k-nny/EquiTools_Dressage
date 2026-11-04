@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
 
+import 'package:reprise_dressage_app/compte/mes_reprises.dart';
 import 'package:reprise_dressage_app/compte/service_compte.dart';
+import 'package:reprise_dressage_app/reprise_controller.dart';
 
 /// Ouvre la fenêtre « Mon compte » : connexion / création de compte si
 /// l'utilisateur n'est pas connecté, sinon son e-mail et la déconnexion.
-Future<void> ouvrirCompte(BuildContext context) {
+Future<void> ouvrirCompte(
+  BuildContext context,
+  ReprisePlayerController controller,
+) {
   return showDialog<void>(
     context: context,
-    builder: (context) => const _DialogCompte(),
+    builder: (context) => _DialogCompte(controller: controller),
   );
 }
 
 class _DialogCompte extends StatefulWidget {
-  const _DialogCompte();
+  final ReprisePlayerController controller;
+
+  const _DialogCompte({required this.controller});
 
   @override
   State<_DialogCompte> createState() => _DialogCompteState();
@@ -103,17 +110,21 @@ class _DialogCompteState extends State<_DialogCompte> {
   Widget _vueConnecte(BuildContext context, ServiceCompte compte) {
     return AlertDialog(
       title: const Text('Mon compte'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Connecté en tant que :'),
-          const SizedBox(height: 4),
-          Text(
-            compte.email ?? '',
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ],
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Connecté en tant que :'),
+            const SizedBox(height: 4),
+            Text(
+              compte.email ?? '',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const Divider(height: 28),
+            MesReprises(controller: widget.controller),
+          ],
+        ),
       ),
       actions: [
         TextButton(
