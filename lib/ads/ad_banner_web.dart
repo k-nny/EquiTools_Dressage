@@ -82,7 +82,12 @@ class AdBanner extends StatefulWidget {
 }
 
 class _AdBannerState extends State<AdBanner> {
-  static const double _hauteurZone = 90;
+  /// Hauteur de la zone pub : 50 px sur téléphone (format "mobile banner"
+  /// 320×50, le plus petit format standard qui reste rémunérateur), 90 px
+  /// sur grand écran.
+  static const double _hauteurMobile = 50;
+  static const double _hauteurGrandEcran = 90;
+  static const double _seuilMobile = 600;
 
   @override
   void initState() {
@@ -104,11 +109,15 @@ class _AdBannerState extends State<AdBanner> {
   Widget build(BuildContext context) {
     if (widget.isPremium) return const SizedBox.shrink();
 
+    final hauteurZone = MediaQuery.sizeOf(context).width < _seuilMobile
+        ? _hauteurMobile
+        : _hauteurGrandEcran;
+
     return SafeArea(
       top: false,
       child: SizedBox(
         width: double.infinity,
-        height: _hauteurZone,
+        height: hauteurZone,
         child: HtmlElementView(viewType: _viewType),
       ),
     );

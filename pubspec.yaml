@@ -42,6 +42,11 @@ dependencies:
   # lib/ads/ad_banner.dart pour la gestion du Web).
   google_mobile_ads: ^5.3.1
 
+  # Protocole de la reprise en PDF (génération + téléchargement/partage,
+  # web et mobile).
+  pdf: ^3.11.1
+  printing: ^5.13.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -63,6 +68,11 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Police embarquée pour le PDF (accents et flèche →).
+  assets:
+    - assets/fonts/DejaVuSans.ttf
+    - assets/fonts/DejaVuSans-Bold.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -155,6 +155,17 @@ class Repere {
   const Repere.lettre(String this.letter) : metres = null;
   const Repere.point(Offset this.metres) : letter = null;
 
+  /// Texte lisible du repère : la lettre, ou les coordonnées en mètres
+  /// pour un point libre (ex. un coin de la carrière).
+  String get libelle {
+    final l = letter;
+    if (l != null) return l;
+    final m = metres!;
+    String n(double v) =>
+        v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+    return '${n(m.dx)} m ; ${n(m.dy)} m';
+  }
+
   Offset toPixels(double w, double h) {
     final m = metres;
     if (m != null) return Lettres.toPixels(m, w, h);
@@ -173,6 +184,27 @@ abstract class Mouvement {
   const Mouvement(this.description, this.allure);
 
   List<Transition> get transitions;
+
+  // --- Informations conservées pour générer le protocole (PDF) ----------
+  // Ces getters ne changent rien au tracé ni à la sauvegarde : ils exposent
+  // seulement ce que chaque mouvement sait déjà de lui-même.
+
+  /// Nom donné par l'utilisateur (c'est ce nom qui doit apparaître dans le
+  /// protocole, jamais le nom technique de la figure).
+  String get nomPersonnalise => description;
+
+  /// Nom technique interne de la figure ("Ligne", "Cercle"...).
+  String get typeFigure;
+
+  /// Repère (lettre) de départ du mouvement.
+  String? get positionDepart;
+
+  /// Repère (lettre) d'arrivée, ou null s'il n'a pas de lettre (ex. fin
+  /// d'un demi-cercle).
+  String? get positionArrivee;
+
+  /// Paramètres propres à la figure (diamètre, nombre de boucles...).
+  Map<String, Object?> get parametres => const {};
 
   /// Copie de ce mouvement avec une allure, un nom ou des transitions
   /// différents (les mouvements sont immuables). Pour [MvtArret], l'allure
@@ -266,6 +298,20 @@ class MvtLigne extends Mouvement {
   }) : super(description, allure);
 
   @override
+  String get typeFigure => 'Ligne';
+
+  @override
+  String? get positionDepart => points.first.libelle;
+
+  @override
+  String? get positionArrivee => points.last.libelle;
+
+  @override
+  Map<String, Object?> get parametres => {
+    'points': points.map((p) => p.libelle).toList(),
+  };
+
+  @override
   Mouvement copyWith({
     Allure? allure,
     String? description,
@@ -313,6 +359,21 @@ class MvtCercle extends Mouvement {
   }) : super(description, allure);
 
   @override
+  String get typeFigure => 'Cercle';
+
+  @override
+  String? get positionDepart => letter;
+
+  @override
+  String? get positionArrivee => letter;
+
+  @override
+  Map<String, Object?> get parametres => {
+    'diametre': diameter,
+    'prevLetter': prevLetter,
+  };
+
+  @override
   Mouvement copyWith({
     Allure? allure,
     String? description,
@@ -353,6 +414,21 @@ class MvtDemiCercle extends Mouvement {
   }) : super(description, allure);
 
   @override
+  String get typeFigure => 'Demi-cercle';
+
+  @override
+  String? get positionDepart => fromLetter;
+
+  @override
+  String? get positionArrivee => null;
+
+  @override
+  Map<String, Object?> get parametres => {
+    'diametre': diameter,
+    'prevLetter': prevLetter,
+  };
+
+  @override
   Mouvement copyWith({
     Allure? allure,
     String? description,
@@ -391,6 +467,18 @@ class MvtDemiVolte extends Mouvement {
   }) : super(description, allure);
 
   @override
+  String get typeFigure => 'Demi-volte';
+
+  @override
+  String? get positionDepart => fromLetter;
+
+  @override
+  String? get positionArrivee => toLetter;
+
+  @override
+  Map<String, Object?> get parametres => {'diametre': diameter};
+
+  @override
   Mouvement copyWith({
     Allure? allure,
     String? description,
@@ -427,6 +515,18 @@ class MvtDemiVolteRenversee extends Mouvement {
     String description, {
     this.transitions = const [],
   }) : super(description, allure);
+
+  @override
+  String get typeFigure => 'Demi-volte renversée';
+
+  @override
+  String? get positionDepart => fromLetter;
+
+  @override
+  String? get positionArrivee => toLetter;
+
+  @override
+  Map<String, Object?> get parametres => {'diametre': diameter};
 
   @override
   Mouvement copyWith({
@@ -486,6 +586,23 @@ class MvtSerpentine extends Mouvement {
   }) : super(description, allure);
 
   @override
+  String get typeFigure => 'Serpentine';
+
+  @override
+  String? get positionDepart => fromLetter;
+
+  @override
+  String? get positionArrivee => toLetter;
+
+  @override
+  Map<String, Object?> get parametres => {
+    'nbBoucles': nbLoop,
+    'prevLetter': prevLetter,
+    'premiereBoucleInversee': premiereBoucleInversee,
+    'rayonBoucle': rayonBoucle,
+  };
+
+  @override
   Mouvement copyWith({
     Allure? allure,
     String? description,
@@ -535,6 +652,15 @@ class MvtArret extends Mouvement {
 
   @override
   List<Transition> get transitions => const [];
+
+  @override
+  String get typeFigure => 'Arrêt';
+
+  @override
+  String? get positionDepart => letter;
+
+  @override
+  String? get positionArrivee => letter;
 
   @override
   Mouvement copyWith({

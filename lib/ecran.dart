@@ -9,6 +9,7 @@ import 'premium_status.dart';
 import 'reprise.dart';
 import 'reprise_controller.dart';
 import 'reprise_player.dart';
+import 'protocole_pdf.dart';
 import 'reprise_storage.dart';
 
 /// Largeur à partir de laquelle on bascule sur la mise en page "ordinateur"
@@ -129,6 +130,12 @@ class _EcranState extends State<Ecran> {
       appBar: AppBar(
         title: const Text('EquiTools - Dressage'),
         actions: [
+          IconButton(
+            tooltip: 'Protocole PDF',
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            onPressed: () =>
+                partagerProtocolePdf(context, _controller.mouvements),
+          ),
           IconButton(
             tooltip: "Réinitialiser à l'exemple",
             icon: const Icon(Icons.refresh),
