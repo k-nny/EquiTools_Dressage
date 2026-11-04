@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'ads/ad_banner.dart';
+import 'compte/ecran_compte.dart';
+import 'compte/service_compte.dart';
 import 'pages_info.dart';
 import 'panels/allures_panel.dart';
 import 'panels/figures_panel.dart';
@@ -129,8 +131,29 @@ class _EcranState extends State<Ecran> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('EquiTools - Dressage'),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text('EquiTools - Dressage'),
+        ),
         actions: [
+          // 👤 compte (affiché seulement si Firebase est configuré)
+          ListenableBuilder(
+            listenable: ServiceCompte.instance,
+            builder: (context, _) {
+              final compte = ServiceCompte.instance;
+              if (!compte.disponible) return const SizedBox.shrink();
+              return IconButton(
+                tooltip: compte.estConnecte ? 'Mon compte' : 'Se connecter',
+                icon: Icon(
+                  compte.estConnecte
+                      ? Icons.account_circle
+                      : Icons.account_circle_outlined,
+                ),
+                onPressed: () => ouvrirCompte(context),
+              );
+            },
+          ),
           IconButton(
             tooltip: 'Protocole PDF',
             icon: const Icon(Icons.picture_as_pdf_outlined),

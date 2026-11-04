@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'compte/service_compte.dart';
 import 'ecran.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Appli pensée pour le téléphone (portrait) en vue d'une publication sur
   // le Play Store / App Store : on verrouille l'orientation.
@@ -10,6 +11,9 @@ void main() {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  // Comptes (Firebase) : sans configuration, ils restent désactivés et
+  // l'appli fonctionne comme avant.
+  await ServiceCompte.instance.init();
   runApp(const MyApp());
 }
 

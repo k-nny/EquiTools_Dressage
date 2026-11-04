@@ -50,6 +50,10 @@ dependencies:
   # Ouverture des pages d'information (guide, confidentialité...).
   url_launcher: ^6.3.1
 
+  # Comptes utilisateurs (Firebase Authentication). Voir README_COMPTE.md.
+  firebase_core: ^4.0.0
+  firebase_auth: ^6.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
