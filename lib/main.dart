@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'compte/achats/achats.dart';
 import 'compte/service_compte.dart';
 import 'compte/service_premium.dart';
 import 'ecran.dart';
@@ -16,6 +17,7 @@ Future<void> main() async {
   // Comptes (Firebase) : sans configuration, ils restent désactivés et
   // l'appli fonctionne comme avant.
   await ServiceCompte.instance.init();
+  await AchatsIntegres.init();
   ServicePremium.instance.init();
   runApp(const MyApp());
 }

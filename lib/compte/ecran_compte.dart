@@ -146,6 +146,18 @@ class _DialogCompteState extends State<_DialogCompte> {
             ),
             const Divider(height: 28),
             MesReprises(controller: widget.controller),
+            const Divider(height: 28),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (_) => const _DialogSuppression(),
+                ),
+                child: const Text('Supprimer mon compte'),
+              ),
+            ),
           ],
         ),
       ),
@@ -250,6 +262,99 @@ class _DialogCompteState extends State<_DialogCompte> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : Text(_inscription ? 'Créer mon compte' : 'Me connecter'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Confirmation de la suppression définitive du compte.
+class _DialogSuppression extends StatefulWidget {
+  const _DialogSuppression();
+
+  @override
+  State<_DialogSuppression> createState() => _DialogSuppressionState();
+}
+
+class _DialogSuppressionState extends State<_DialogSuppression> {
+  final _mdp = TextEditingController();
+  bool _occupe = false;
+  String? _erreur;
+
+  @override
+  void dispose() {
+    _mdp.dispose();
+    super.dispose();
+  }
+
+  Future<void> _supprimer() async {
+    if (_mdp.text.isEmpty) {
+      setState(() => _erreur = 'Saisissez votre mot de passe.');
+      return;
+    }
+    setState(() {
+      _occupe = true;
+      _erreur = null;
+    });
+    try {
+      await ServiceCompte.instance.supprimerCompte(_mdp.text);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) setState(() => _erreur = e.toString());
+    } finally {
+      if (mounted) setState(() => _occupe = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Supprimer mon compte ?'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Cette action est définitive : votre compte et vos reprises '
+              'sauvegardées seront supprimés. Un abonnement Premium pris '
+              'sur le site sera résilié immédiatement, sans remboursement. '
+              'Un abonnement pris sur Google Play ou l\'App Store doit '
+              'd\'abord être résilié depuis le magasin.',
+              style: TextStyle(fontSize: 13, height: 1.35),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _mdp,
+              enabled: !_occupe,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Mot de passe (pour confirmer)',
+              ),
+              onSubmitted: (_) => _supprimer(),
+            ),
+            if (_erreur != null) ...[
+              const SizedBox(height: 10),
+              Text(_erreur!, style: const TextStyle(color: Colors.red)),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _occupe ? null : () => Navigator.of(context).pop(),
+          child: const Text('Annuler'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: Colors.red),
+          onPressed: _occupe ? null : _supprimer,
+          child: _occupe
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Supprimer définitivement'),
         ),
       ],
     );

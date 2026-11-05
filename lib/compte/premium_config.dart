@@ -4,8 +4,16 @@
 /// Adresse des fonctions serveur (dossier api/ déployé sur Vercel).
 const String urlApi = 'https://equi-tools-dressage.vercel.app/api';
 
-/// Prix AFFICHÉS dans l'appli. Ils doivent être identiques à ceux créés dans
-/// Stripe (le paiement réel utilise les prix Stripe).
+/// Clés « publiques » du SDK RevenueCat (une par magasin), à copier depuis
+/// le tableau de bord RevenueCat → Project settings → API keys.
+/// Tant qu'elles valent A_REMPLACER, les achats intégrés sont désactivés.
+const String cleRevenueCatAndroid = 'A_REMPLACER';
+const String cleRevenueCatIos = 'A_REMPLACER';
+
+/// Prix AFFICHÉS sur le web (Stripe). Dans les applications, ce sont les
+/// prix des magasins qui s'affichent, automatiquement.
+/// Ils doivent être identiques à ceux créés dans Stripe (le paiement réel
+/// utilise les prix Stripe).
 const String prixMensuel = '2,99 € / mois';
 const String prixAnnuel = '24,99 € / an';
 

@@ -48,4 +48,30 @@ function cors(req, res) {
   return false;
 }
 
-module.exports = { SITE, initAdmin, stripe, utilisateurDepuisRequete, cors };
+// Met à jour le statut Premium d'un utilisateur. Un utilisateur peut être
+// abonné via Stripe (web) ET/OU via un magasin (Google Play / App Store) :
+// « actif » vaut vrai si au moins une des deux sources est active.
+// champs.actifSource = la source concernée est-elle active ?
+async function majAbonnement(uid, source, champs) {
+  const db = initAdmin().firestore();
+  const ref = db.collection('abonnements').doc(uid);
+  await db.runTransaction(async (t) => {
+    const snap = await t.get(ref);
+    const d = snap.exists ? snap.data() : {};
+    const { actifSource, ...reste } = champs;
+    const stripeActif = source === 'stripe' ? !!actifSource : !!d.stripeActif;
+    const storeActif = source === 'store' ? !!actifSource : !!d.storeActif;
+    const autreActive = source === 'stripe' ? storeActif : stripeActif;
+    const ecriture = { ...reste, stripeActif, storeActif, actif: stripeActif || storeActif, maj: Date.now() };
+    if (actifSource || !autreActive) {
+      ecriture.source = source;
+    } else {
+      // La source qui s'arrête ne doit pas écraser les dates de l'autre.
+      delete ecriture.jusqua;
+      delete ecriture.annulationPrevue;
+    }
+    t.set(ref, ecriture, { merge: true });
+  });
+}
+
+module.exports = { SITE, initAdmin, stripe, utilisateurDepuisRequete, cors, majAbonnement };

@@ -2,7 +2,7 @@
 // résilié) et met à jour le statut Premium dans Firestore.
 // C'est la SEULE chose qui peut passer un utilisateur en Premium : le
 // client (l'appli) n'a pas le droit d'écrire dans « abonnements ».
-const { initAdmin, stripe } = require('./_outils');
+const { stripe, majAbonnement } = require('./_outils');
 
 function lireCorps(req) {
   return new Promise((ok, ko) => {
@@ -28,23 +28,16 @@ module.exports = async (req, res) => {
     return res.status(400).send('Signature invalide');
   }
 
-  const db = initAdmin().firestore();
-  const abonnements = db.collection('abonnements');
-
   try {
     switch (evenement.type) {
       case 'checkout.session.completed': {
         const s = evenement.data.object;
         if (s.mode === 'subscription' && s.client_reference_id) {
-          await abonnements.doc(s.client_reference_id).set(
-            {
-              actif: true,
-              client: s.customer,
-              abonnement: s.subscription,
-              maj: Date.now(),
-            },
-            { merge: true }
-          );
+          await majAbonnement(s.client_reference_id, 'stripe', {
+            actifSource: true,
+            client: s.customer,
+            abonnement: s.subscription,
+          });
         }
         break;
       }
@@ -63,17 +56,13 @@ module.exports = async (req, res) => {
               sub.items.data[0] &&
               sub.items.data[0].current_period_end) ||
             sub.current_period_end;
-          await abonnements.doc(uid).set(
-            {
-              actif,
-              client: sub.customer,
-              abonnement: sub.id,
-              annulationPrevue: !!sub.cancel_at_period_end,
-              jusqua: fin ? fin * 1000 : null,
-              maj: Date.now(),
-            },
-            { merge: true }
-          );
+          await majAbonnement(uid, 'stripe', {
+            actifSource: actif,
+            client: sub.customer,
+            abonnement: sub.id,
+            annulationPrevue: !!sub.cancel_at_period_end,
+            jusqua: fin ? fin * 1000 : null,
+          });
         }
         break;
       }

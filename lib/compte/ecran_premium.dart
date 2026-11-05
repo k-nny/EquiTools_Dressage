@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:reprise_dressage_app/compte/achats/achats.dart';
 import 'package:reprise_dressage_app/compte/ecran_compte.dart';
 import 'package:reprise_dressage_app/compte/premium_config.dart';
 import 'package:reprise_dressage_app/compte/service_compte.dart';
@@ -22,11 +23,14 @@ class EcranPremium extends StatefulWidget {
 class _EcranPremiumState extends State<EcranPremium> {
   bool _occupe = false;
   String? _erreur;
+  String? _info;
+  Future<List<OffreAchat>>? _offres;
 
   Future<void> _lancer(Future<void> Function() action) async {
     setState(() {
       _occupe = true;
       _erreur = null;
+      _info = null;
     });
     try {
       await action();
@@ -109,6 +113,110 @@ class _EcranPremiumState extends State<EcranPremium> {
     );
   }
 
+  /// Version Android / iOS : formules et prix fournis par le magasin.
+  Widget _offresMagasin() {
+    return _carte(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Choisissez votre formule',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+          ),
+          const SizedBox(height: 12),
+          FutureBuilder<List<OffreAchat>>(
+            future: _offres ??= ServicePremium.instance.offresIntegrees(),
+            builder: (context, snap) {
+              if (snap.connectionState != ConnectionState.done) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final offres = snap.data ?? const <OffreAchat>[];
+              if (snap.hasError || offres.isEmpty) {
+                return const Text(
+                  'Les abonnements ne sont pas disponibles pour le moment. '
+                  'Réessayez plus tard.',
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final o in offres)
+                    Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Palette.creme,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Palette.cuir.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              o.titre,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(o.prix, textAlign: TextAlign.center),
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: _occupe
+                                    ? null
+                                    : () => _lancer(() async {
+                                        await ServicePremium.instance
+                                            .acheterIntegre(o);
+                                        if (mounted) {
+                                          setState(
+                                            () => _info =
+                                                'Merci ! Activation en cours…',
+                                          );
+                                        }
+                                      }),
+                                child: const Text('Choisir'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton(
+              onPressed: _occupe
+                  ? null
+                  : () => _lancer(() async {
+                      await ServicePremium.instance.restaurerAchats();
+                      if (mounted) {
+                        setState(
+                          () => _info = 'Achats restaurés (si un abonnement existe).',
+                        );
+                      }
+                    }),
+              child: const Text('Restaurer mes achats'),
+            ),
+          ),
+          const Text(
+            'L\'abonnement est facturé via votre compte Google Play / '
+            'App Store et se renouvelle automatiquement à la fin de chaque '
+            'période, sauf résiliation au moins 24 h avant, depuis les '
+            'réglages d\'abonnements de votre compte de store.',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _actions() {
     return ListenableBuilder(
       listenable: Listenable.merge([
@@ -168,6 +276,8 @@ class _EcranPremiumState extends State<EcranPremium> {
             ),
           );
         }
+
+        if (premium.achatIntegre) return _offresMagasin();
 
         return _carte(
           child: Column(
@@ -269,16 +379,33 @@ class _EcranPremiumState extends State<EcranPremium> {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Text(_erreur!, style: const TextStyle(color: Colors.red)),
               ),
-            Center(
-              child: TextButton(
-                onPressed: () => launchUrl(
-                  Uri.parse(
-                    '${urlApi.replaceFirst('/api', '')}/conditions-de-vente.html',
-                  ),
-                  webOnlyWindowName: '_blank',
-                ),
-                child: const Text('Conditions de vente'),
+            if (_info != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Text(_info!, style: const TextStyle(color: Colors.green)),
               ),
+            Wrap(
+              alignment: WrapAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () => launchUrl(
+                    Uri.parse(
+                      '${urlApi.replaceFirst('/api', '')}/conditions-de-vente.html',
+                    ),
+                    webOnlyWindowName: '_blank',
+                  ),
+                  child: const Text('Conditions de vente'),
+                ),
+                TextButton(
+                  onPressed: () => launchUrl(
+                    Uri.parse(
+                      '${urlApi.replaceFirst('/api', '')}/confidentialite.html',
+                    ),
+                    webOnlyWindowName: '_blank',
+                  ),
+                  child: const Text('Confidentialité'),
+                ),
+              ],
             ),
           ],
         ),

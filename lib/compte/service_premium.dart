@@ -7,17 +7,12 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:reprise_dressage_app/compte/achats/achats.dart';
+import 'package:reprise_dressage_app/compte/erreur_paiement.dart';
 import 'package:reprise_dressage_app/compte/premium_config.dart';
 import 'package:reprise_dressage_app/compte/service_compte.dart';
 
-/// Erreur lisible renvoyée par les fonctions de paiement.
-class ErreurPaiement implements Exception {
-  final String message;
-  const ErreurPaiement(this.message);
-
-  @override
-  String toString() => message;
-}
+export 'package:reprise_dressage_app/compte/erreur_paiement.dart';
 
 /// Statut Premium de l'utilisateur connecté.
 ///
@@ -32,6 +27,7 @@ class ServicePremium extends ChangeNotifier {
   bool _premium = false;
   bool _annulationPrevue = false;
   DateTime? _jusqua;
+  String? _source; // 'stripe' (web) ou 'store' (Google Play / App Store)
   String? _uid;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _abonnement;
 
@@ -42,6 +38,10 @@ class ServicePremium extends ChangeNotifier {
 
   /// Fin de la période en cours (si connue).
   DateTime? get jusqua => _jusqua;
+
+  /// true sur Android / iOS : l'achat passe par le magasin (obligatoire
+  /// dans les applications publiées). Sur le web, c'est Stripe.
+  bool get achatIntegre => AchatsIntegres.disponible;
 
   /// À appeler une fois, après ServiceCompte.init().
   void init() {
@@ -60,9 +60,14 @@ class ServicePremium extends ChangeNotifier {
     _premium = false;
     _annulationPrevue = false;
     _jusqua = null;
+    _source = null;
     notifyListeners();
 
-    if (uid == null) return;
+    if (uid == null) {
+      AchatsIntegres.deconnecter();
+      return;
+    }
+    AchatsIntegres.connecter(uid);
     _abonnement = FirebaseFirestore.instance
         .collection('abonnements')
         .doc(uid)
@@ -76,6 +81,7 @@ class ServicePremium extends ChangeNotifier {
             _jusqua = j is num
                 ? DateTime.fromMillisecondsSinceEpoch(j.toInt())
                 : null;
+            _source = d?['source'] as String?;
             notifyListeners();
           },
           onError: (_) {
@@ -130,9 +136,28 @@ class ServicePremium extends ChangeNotifier {
     await launchUrl(Uri.parse(url), webOnlyWindowName: '_self');
   }
 
-  /// Ouvre la gestion de l'abonnement (carte, factures, résiliation).
+  /// Ouvre la gestion de l'abonnement (carte, factures, résiliation) : le
+  /// portail Stripe, ou les abonnements du magasin si l'achat vient du
+  /// magasin.
   Future<void> ouvrirGestion() async {
+    if (_source == 'store') {
+      final url = defaultTargetPlatform == TargetPlatform.iOS
+          ? 'https://apps.apple.com/account/subscriptions'
+          : 'https://play.google.com/store/account/subscriptions';
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      return;
+    }
     final url = await _appeler('portail', {});
     await launchUrl(Uri.parse(url), webOnlyWindowName: '_self');
   }
+
+  // --- Achats intégrés (Android / iOS) -----------------------------------
+
+  Future<List<OffreAchat>> offresIntegrees() => AchatsIntegres.offres();
+
+  /// Lance l'achat dans le magasin. Le statut Premium se met à jour tout
+  /// seul quelques secondes plus tard (confirmation du serveur).
+  Future<void> acheterIntegre(OffreAchat offre) => AchatsIntegres.acheter(offre);
+
+  Future<void> restaurerAchats() => AchatsIntegres.restaurer();
 }
