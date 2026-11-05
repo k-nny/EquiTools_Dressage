@@ -64,7 +64,13 @@ class RepriseSauvegardee {
 class ServiceReprisesCloud {
   ServiceReprisesCloud._();
 
-  static const int maxReprises = 3;
+  /// Nombre maximum de reprises sauvegardées : 3 en gratuit, 10 en Premium
+  /// (limite aussi imposée côté serveur, voir firestore.rules).
+  static const int maxGratuit = 3;
+  static const int maxPremium = 10;
+
+  static int maxPour({required bool premium}) =>
+      premium ? maxPremium : maxGratuit;
 
   static DocumentReference<Map<String, dynamic>> _document() {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -90,8 +96,8 @@ class ServiceReprisesCloud {
   }
 
   static Future<void> enregistrer(List<RepriseSauvegardee> liste) async {
-    if (liste.length > maxReprises) {
-      throw StateError('Maximum $maxReprises reprises');
+    if (liste.length > maxPremium) {
+      throw StateError('Maximum $maxPremium reprises');
     }
     await _document().set({'reprises': liste.map((r) => r.toMap()).toList()});
   }

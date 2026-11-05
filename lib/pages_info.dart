@@ -10,6 +10,7 @@ const List<(String, String)> _pages = [
   ('a-propos.html', 'À propos'),
   ('confidentialite.html', 'Confidentialité'),
   ('mentions-legales.html', 'Mentions légales'),
+  ('conditions-de-vente.html', 'Conditions de vente'),
   ('contact.html', 'Contact'),
 ];
 

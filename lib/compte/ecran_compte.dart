@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:reprise_dressage_app/compte/ecran_premium.dart';
 import 'package:reprise_dressage_app/compte/mes_reprises.dart';
+import 'package:reprise_dressage_app/compte/service_premium.dart';
 import 'package:reprise_dressage_app/compte/service_compte.dart';
 import 'package:reprise_dressage_app/reprise_controller.dart';
 
@@ -120,6 +122,27 @@ class _DialogCompteState extends State<_DialogCompte> {
             Text(
               compte.email ?? '',
               style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 14),
+            ListenableBuilder(
+              listenable: ServicePremium.instance,
+              builder: (context, _) {
+                final premium = ServicePremium.instance.estPremium;
+                return FilledButton.tonalIcon(
+                  icon: const Text('✨'),
+                  label: Text(premium ? 'Mon abonnement Premium' : 'Passer Premium'),
+                  onPressed: () {
+                    final nav = Navigator.of(context);
+                    nav.pop();
+                    nav.push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            EcranPremium(controller: widget.controller),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
             const Divider(height: 28),
             MesReprises(controller: widget.controller),

@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseException;
 import 'package:flutter/material.dart';
 
+import 'package:reprise_dressage_app/compte/service_premium.dart';
 import 'package:reprise_dressage_app/compte/service_reprises_cloud.dart';
 import 'package:reprise_dressage_app/reprise_controller.dart';
 import 'package:reprise_dressage_app/theme.dart';
@@ -25,8 +26,23 @@ class _MesReprisesState extends State<MesReprises> {
   @override
   void initState() {
     super.initState();
+    ServicePremium.instance.addListener(_surChangementPremium);
     _recharger();
   }
+
+  @override
+  void dispose() {
+    ServicePremium.instance.removeListener(_surChangementPremium);
+    super.dispose();
+  }
+
+  void _surChangementPremium() {
+    if (mounted) setState(() {});
+  }
+
+  int get _max => ServiceReprisesCloud.maxPour(
+    premium: ServicePremium.instance.estPremium,
+  );
 
   Future<void> _recharger() async {
     setState(() {
@@ -106,7 +122,7 @@ class _MesReprisesState extends State<MesReprises> {
       setState(() => _erreur = 'Votre reprise est vide : rien à sauvegarder.');
       return;
     }
-    if (liste.length >= ServiceReprisesCloud.maxReprises) return;
+    if (liste.length >= _max) return;
 
     final nom = await showDialog<String>(
       context: context,
@@ -190,7 +206,8 @@ class _MesReprisesState extends State<MesReprises> {
   @override
   Widget build(BuildContext context) {
     final liste = _liste;
-    final max = ServiceReprisesCloud.maxReprises;
+    final max = _max;
+    final premium = ServicePremium.instance.estPremium;
     final plein = liste != null && liste.length >= max;
 
     return Column(
@@ -260,12 +277,17 @@ class _MesReprisesState extends State<MesReprises> {
             label: const Text('Sauvegarder ma reprise'),
           ),
         if (plein)
-          const Padding(
-            padding: EdgeInsets.only(top: 6),
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
             child: Text(
-              'Limite de 3 reprises atteinte : remplacez-en une ou '
-              'supprimez-en une.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              premium
+                  ? 'Limite de $max reprises atteinte : remplacez-en une '
+                        'ou supprimez-en une.'
+                  : 'Limite de $max reprises atteinte : remplacez-en une, '
+                        'supprimez-en une, ou passez Premium pour en '
+                        'sauvegarder jusqu\'à '
+                        '${ServiceReprisesCloud.maxPremium}.',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ),
         if (_erreur != null) ...[

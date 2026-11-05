@@ -8,7 +8,7 @@ import 'panels/allures_panel.dart';
 import 'panels/figures_panel.dart';
 import 'panels/reprise_list.dart';
 import 'lettres.dart';
-import 'premium_status.dart';
+import 'compte/service_premium.dart';
 import 'reprise.dart';
 import 'reprise_controller.dart';
 import 'reprise_player.dart';
@@ -37,6 +37,19 @@ class _EcranState extends State<Ecran> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _verifierTutoriel());
+    // Retour de la page de paiement Stripe (web).
+    if (Uri.base.queryParameters['paiement'] == 'ok') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Merci ! Votre abonnement Premium est en cours d\'activation…',
+            ),
+          ),
+        );
+      });
+    }
   }
 
   @override
@@ -220,9 +233,18 @@ class _EcranState extends State<Ecran> {
               ),
             ),
 
-            // Petit espace pour ne pas coller la pub aux boutons du
-            // lecteur juste au-dessus (cf. contrainte n°10).
-            const SizedBox(height: 20),
+            // Les abonnés Premium n'ont plus de publicité (ni l'espace qui
+            // lui est réservé). Statut mis à jour en direct.
+            ListenableBuilder(
+              listenable: ServicePremium.instance,
+              builder: (context, _) {
+                final premium = ServicePremium.instance.estPremium;
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Petit espace pour ne pas coller la pub aux boutons du
+                    // lecteur juste au-dessus (cf. contrainte n°10).
+                    if (!premium) const SizedBox(height: 20),
 
             // 📢 zone publicitaire dédiée, sous le contenu — jamais par
             // dessus (pas de Stack/Positioned ici). N'affiche rien pour
@@ -230,7 +252,11 @@ class _EcranState extends State<Ecran> {
             // de charger : la hauteur de cette zone est donc 0 par
             // défaut, et ne prend la hauteur réelle de la bannière que
             // lorsqu'elle est effectivement chargée.
-            AdBanner(isPremium: estUtilisateurPremium),
+                    AdBanner(isPremium: premium),
+                  ],
+                );
+              },
+            ),
           ],
         ),
       ),

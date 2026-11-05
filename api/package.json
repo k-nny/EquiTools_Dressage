@@ -1,0 +1,13 @@
+{
+  "name": "equitools-api",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Fonctions serveur (Vercel) : paiement Premium via Stripe",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "stripe": "^17.5.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,15 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Nombre maximum de reprises : 10 pour un abonné Premium, 3 sinon.
+    // (Le statut Premium est lu dans « abonnements », écrit par le serveur.)
+    function limite() {
+      let abo = /databases/$(database)/documents/abonnements/$(request.auth.uid);
+      return (exists(abo) && get(abo).data.actif == true) ? 10 : 3;
+    }
+
+    // Statut Premium : lisible par son propriétaire, mais écrit UNIQUEMENT
+    // par le serveur (webhook Stripe, via le SDK Admin qui ignore ces
+    // règles). Personne ne peut donc se donner Premium depuis l'appli.
+    match /abonnements/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+
     // Chaque utilisateur ne peut lire/écrire que son propre document, et
-    // il ne peut pas contenir plus de 3 reprises.
+    // il ne peut pas dépasser la limite ci-dessus.
     match /users/{userId} {
       allow read, delete: if request.auth != null && request.auth.uid == userId;
-      allow create, update: if request.auth != null
+      allow create: if request.auth != null
         && request.auth.uid == userId
         && request.resource.data.keys().hasOnly(['reprises'])
         && request.resource.data.reprises is list
-        && request.resource.data.reprises.size() <= 3;
+        && request.resource.data.reprises.size() <= limite();
+      // Mise à jour : sous la limite, ou en réduisant la liste (un ex-abonné
+      // qui a plus de 3 reprises doit pouvoir en supprimer).
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['reprises'])
+        && request.resource.data.reprises is list
+        && (request.resource.data.reprises.size() <= limite()
+            || request.resource.data.reprises.size()
+               < resource.data.reprises.size());
     }
   }
 }
