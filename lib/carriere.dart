@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:reprise_dressage_app/lettres.dart';
 import 'package:reprise_dressage_app/reprise.dart';
+import 'package:reprise_dressage_app/theme.dart';
 
 /// Dessine l'ensemble des mouvements de la reprise sur la carrière.
 /// Le mouvement à l'index [highlightIndex] (s'il est fourni) est tracé
@@ -56,8 +57,9 @@ class Carriere extends StatelessWidget {
           children: [
             Container(
               decoration: BoxDecoration(
-                border: Border.all(width: 2),
-                color: Colors.amber[100],
+                border: Border.all(width: 2, color: Palette.bordureSable),
+                borderRadius: BorderRadius.circular(4),
+                color: Palette.sable,
               ),
             ),
             CustomPaint(
@@ -82,21 +84,21 @@ class Carriere extends StatelessWidget {
 
     double left = x - charW / 2;
     double top = y - fontSize / 2;
-    Color color = Colors.grey;
+    Color color = const Color(0xFF8D6E63);
 
     // lettres extérieures
     if (letter == 'A') {
       top = -fontSize * 1.5;
-      color = Colors.black;
+      color = Palette.brunFonce;
     } else if (letter == 'C') {
       top = h + fontSize * 0.5;
-      color = Colors.black;
+      color = Palette.brunFonce;
     } else if (positionMeters.dx == 0) {
       left = -charW * 2;
-      color = Colors.black;
+      color = Palette.brunFonce;
     } else if (positionMeters.dx == Lettres.width) {
       left = w + charW;
-      color = Colors.black;
+      color = Palette.brunFonce;
     }
 
     return Positioned(

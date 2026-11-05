@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reprise_dressage_app/theme.dart';
 
 import 'package:reprise_dressage_app/carriere.dart';
 import 'package:reprise_dressage_app/lettres.dart';
@@ -386,17 +387,27 @@ class _ReprisePlayerState extends State<ReprisePlayer>
             children: [
               Expanded(
                 flex: 11,
-                child: Padding(
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(10, 4, 0, 4),
                   padding: const EdgeInsets.fromLTRB(28, 30, 20, 30),
+                  decoration: _decorationPrairie(),
                   child: carriere,
                 ),
               ),
               Expanded(
                 flex: 9,
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(0, 8, 12, 8),
+                  padding: const EdgeInsets.fromLTRB(10, 4, 12, 4),
                   child: Column(
-                    children: [bandeau, const SizedBox(height: 8), controles],
+                    children: [
+                      bandeau,
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(8, 6, 8, 12),
+                        decoration: _decorationCarte(),
+                        child: controles,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -408,7 +419,17 @@ class _ReprisePlayerState extends State<ReprisePlayer>
           children: [
             bandeau,
             const SizedBox(height: 10),
-            Expanded(child: carriere),
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 30,
+                ),
+                decoration: _decorationPrairie(),
+                child: carriere,
+              ),
+            ),
             const SizedBox(height: 10),
             controles,
           ],
@@ -443,6 +464,15 @@ class _MouvementBandeau extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: compact ? 0 : 16, vertical: 4),
+      padding: EdgeInsets.symmetric(vertical: compact ? 10 : 0),
+      decoration: _decorationCarte(),
+      child: _contenu(context),
+    );
+  }
+
+  Widget _contenu(BuildContext context) {
     final mvt = mouvement;
     if (mvt == null) {
       return SizedBox(
@@ -621,7 +651,7 @@ class _Controles extends StatelessWidget {
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
+            child: FilledButton.tonalIcon(
               onPressed: onAdd,
               icon: const Icon(Icons.add),
               label: const Text('Ajouter', overflow: TextOverflow.ellipsis),
@@ -732,3 +762,20 @@ class _Controles extends StatelessWidget {
     );
   }
 }
+
+
+/// Fond « prairie » autour de la carrière (purement décoratif).
+BoxDecoration _decorationPrairie() => BoxDecoration(
+  color: Palette.prairie,
+  borderRadius: BorderRadius.circular(22),
+);
+
+/// Petite carte blanche arrondie (bandeau de la figure, contrôles).
+BoxDecoration _decorationCarte() => BoxDecoration(
+  color: Palette.carte,
+  borderRadius: BorderRadius.circular(18),
+  border: Border.all(color: Palette.traitFin),
+  boxShadow: const [
+    BoxShadow(color: Color(0x14000000), blurRadius: 6, offset: Offset(0, 2)),
+  ],
+);

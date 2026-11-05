@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:reprise_dressage_app/compte/service_reprises_cloud.dart';
 import 'package:reprise_dressage_app/reprise_controller.dart';
+import 'package:reprise_dressage_app/theme.dart';
 
 /// Liste des reprises sauvegardées dans le compte (3 maximum) : sauvegarder
 /// la reprise actuelle, en charger une, la remplacer ou la supprimer.
@@ -210,13 +211,19 @@ class _MesReprisesState extends State<MesReprises> {
           const Text('Aucune reprise sauvegardée pour le moment.'),
         if (liste != null)
           for (var i = 0; i < liste.length; i++)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 5),
+              padding: const EdgeInsets.fromLTRB(14, 10, 8, 4),
+              decoration: BoxDecoration(
+                color: Palette.creme,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Palette.traitFin),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    liste[i].nom,
+                    '🐴 ${liste[i].nom}',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   Text(
@@ -226,7 +233,7 @@ class _MesReprisesState extends State<MesReprises> {
                   ),
                   Wrap(
                     children: [
-                      TextButton(
+                      FilledButton.tonal(
                         onPressed: _occupe ? null : () => _charger(i),
                         child: const Text('Charger'),
                       ),

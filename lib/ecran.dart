@@ -13,6 +13,7 @@ import 'reprise.dart';
 import 'reprise_controller.dart';
 import 'reprise_player.dart';
 import 'protocole_pdf.dart';
+import 'theme.dart';
 import 'reprise_storage.dart';
 
 /// Largeur à partir de laquelle on bascule sur la mise en page "ordinateur"
@@ -131,10 +132,23 @@ class _EcranState extends State<Ecran> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const FittedBox(
+        title: FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
-          child: Text('EquiTools - Dressage'),
+          child: Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: '🐴 EquiTools'),
+                TextSpan(
+                  text: ' Dressage',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
         actions: [
           // 👤 compte (affiché seulement si Firebase est configuré)
@@ -173,7 +187,7 @@ class _EcranState extends State<Ecran> {
           children: [
             // 📏 choix de la taille de la carrière
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
                   const Text(
@@ -268,8 +282,14 @@ class _MiseEnPageTelephone extends StatelessWidget {
     return Column(
       children: [
         // 🔵 légende des allures
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+        Container(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: Palette.carte,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Palette.traitFin),
+          ),
           child: Wrap(
             alignment: WrapAlignment.center,
             spacing: 16,
@@ -304,7 +324,7 @@ class _MiseEnPageTelephone extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: FilledButton.tonalIcon(
                   onPressed: () => _ouvrirFeuille(
                     context,
                     ListeReprise(controller: controller),
@@ -315,7 +335,7 @@ class _MiseEnPageTelephone extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: OutlinedButton.icon(
+                child: FilledButton.tonalIcon(
                   onPressed: () => _ouvrirFeuille(
                     context,
                     AlluresPanel(controller: controller),

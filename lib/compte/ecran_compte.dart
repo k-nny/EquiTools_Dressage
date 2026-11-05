@@ -109,7 +109,7 @@ class _DialogCompteState extends State<_DialogCompte> {
 
   Widget _vueConnecte(BuildContext context, ServiceCompte compte) {
     return AlertDialog(
-      title: const Text('Mon compte'),
+      title: const Text('👋 Mon compte'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -150,6 +150,12 @@ class _DialogCompteState extends State<_DialogCompte> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const Text(
+              'Créez un compte gratuit pour sauvegarder jusqu\'à 3 reprises '
+              'et les retrouver sur tous vos appareils.',
+              style: TextStyle(fontSize: 13, height: 1.35),
+            ),
+            const SizedBox(height: 14),
             TextField(
               controller: _email,
               enabled: !_occupe,
