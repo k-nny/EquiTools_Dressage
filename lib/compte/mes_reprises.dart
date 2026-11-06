@@ -232,7 +232,7 @@ class _MesReprisesState extends State<MesReprises> {
               margin: const EdgeInsets.symmetric(vertical: 5),
               padding: const EdgeInsets.fromLTRB(14, 10, 8, 4),
               decoration: BoxDecoration(
-                color: Palette.creme,
+                color: Palette.ivoire,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Palette.traitFin),
               ),

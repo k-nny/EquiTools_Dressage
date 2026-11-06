@@ -145,23 +145,43 @@ class _EcranState extends State<Ecran> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text.rich(
-            TextSpan(
-              children: [
-                const TextSpan(text: '🐴 EquiTools'),
-                TextSpan(
-                  text: ' Dressage',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w400,
-                    color: Theme.of(context).colorScheme.primary,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Logo EquiTools (emblème) à gauche du titre.
+            Image.asset(
+              'assets/images/logo_cercle.png',
+              height: 36,
+              filterQuality: FilterQuality.medium,
+              semanticLabel: 'Logo EquiTools',
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      const TextSpan(text: 'Equi'),
+                      const TextSpan(
+                        text: 'Tools',
+                        style: TextStyle(color: Palette.or),
+                      ),
+                      TextSpan(
+                        text: ' Dressage',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w400,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
         actions: [
           // 👤 compte (affiché seulement si Firebase est configuré)

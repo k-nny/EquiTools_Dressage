@@ -1,30 +1,58 @@
 import 'package:flutter/material.dart';
 
-/// Palette « écurie » : tons chauds (cuir, sable, crème) et un vert prairie.
-/// Purement visuel : aucune couleur d'allure n'est modifiée ici.
+/// Palette du logo EquiTools : noir charbon, or, ivoire.
+/// Purement visuel : aucune couleur d'allure n'est modifiée ici (elles
+/// restent définies dans reprise.dart).
+///
+/// Règle d'usage : l'or décore (bordures, filets, sélection) ; pour du
+/// petit texte sur fond clair on utilise [orFonce] (contraste suffisant).
 class Palette {
   Palette._();
 
-  static const Color cuir = Color(0xFF9C4A2F);
-  static const Color brunFonce = Color(0xFF4E342E);
-  static const Color creme = Color(0xFFFFF8EE);
-  static const Color sable = Color(0xFFF3E2BE);
-  static const Color bordureSable = Color(0xFF7A5230);
-  static const Color prairie = Color(0xFFE4ECD8);
+  /// Noir du logo : couleur principale (boutons, titres, texte).
+  static const Color charbon = Color(0xFF1D2225);
+
+  /// Or du logo : accent décoratif.
+  static const Color or = Color(0xFFB38328);
+
+  /// Or assombri : texte doré sur fond clair, icônes.
+  static const Color orFonce = Color(0xFF8F6A1D);
+
+  /// Or clair du logo : reflets, éléments sélectionnés.
+  static const Color orClair = Color(0xFFD9B780);
+
+  /// Teinte très pâle d'or : fonds de zones, panneau autour de la carrière.
+  static const Color orPale = Color(0xFFF3EAD6);
+
+  /// Fond de l'application.
+  static const Color ivoire = Color(0xFFFBF8F2);
+
+  /// Surface de la carrière (claire, pour bien faire ressortir les allures).
+  static const Color sol = Color(0xFFFFFDF8);
+
   static const Color carte = Colors.white;
-  static const Color traitFin = Color(0xFFE8D9C5);
+
+  /// Filets et bordures discrètes.
+  static const Color traitFin = Color(0xFFE7DFCE);
 }
 
 ThemeData construireTheme() {
   final base = ColorScheme.fromSeed(
-    seedColor: Palette.cuir,
+    seedColor: Palette.or,
     brightness: Brightness.light,
   );
   final scheme = base.copyWith(
-    surface: Palette.creme,
-    primary: Palette.cuir,
-    onSurface: Palette.brunFonce,
+    surface: Palette.ivoire,
+    primary: Palette.charbon,
+    onPrimary: Colors.white,
+    primaryContainer: Palette.orPale,
+    onPrimaryContainer: Palette.charbon,
+    secondary: Palette.or,
+    onSecondary: Colors.white,
+    onSurface: Palette.charbon,
+    outline: Palette.orFonce,
     outlineVariant: Palette.traitFin,
+    surfaceTint: Colors.transparent,
   );
 
   const stade = StadiumBorder();
@@ -32,17 +60,17 @@ ThemeData construireTheme() {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
-    scaffoldBackgroundColor: Palette.creme,
+    scaffoldBackgroundColor: Palette.ivoire,
     appBarTheme: const AppBarTheme(
-      backgroundColor: Palette.creme,
-      foregroundColor: Palette.brunFonce,
+      backgroundColor: Palette.ivoire,
+      foregroundColor: Palette.charbon,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
       titleTextStyle: TextStyle(
         fontSize: 21,
         fontWeight: FontWeight.w800,
-        color: Palette.brunFonce,
+        color: Palette.charbon,
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
@@ -56,7 +84,7 @@ ThemeData construireTheme() {
       style: OutlinedButton.styleFrom(
         shape: stade,
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        side: BorderSide(color: Palette.cuir.withValues(alpha: 0.45)),
+        side: BorderSide(color: Palette.or.withValues(alpha: 0.8)),
         textStyle: const TextStyle(fontWeight: FontWeight.w600),
       ),
     ),
@@ -75,11 +103,11 @@ ThemeData construireTheme() {
         ),
         foregroundColor: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.selected)
-              ? Palette.brunFonce
-              : Palette.brunFonce.withValues(alpha: 0.75),
+              ? Palette.charbon
+              : Palette.charbon.withValues(alpha: 0.75),
         ),
         side: WidgetStatePropertyAll(
-          BorderSide(color: Palette.cuir.withValues(alpha: 0.35)),
+          BorderSide(color: Palette.or.withValues(alpha: 0.6)),
         ),
       ),
     ),
@@ -90,11 +118,11 @@ ThemeData construireTheme() {
       titleTextStyle: const TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w800,
-        color: Palette.brunFonce,
+        color: Palette.charbon,
       ),
     ),
     bottomSheetTheme: const BottomSheetThemeData(
-      backgroundColor: Palette.creme,
+      backgroundColor: Palette.ivoire,
       surfaceTintColor: Colors.transparent,
       showDragHandle: true,
       shape: RoundedRectangleBorder(
@@ -108,7 +136,7 @@ ThemeData construireTheme() {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Palette.creme,
+      fillColor: Palette.ivoire,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: Palette.traitFin),
@@ -119,7 +147,7 @@ ThemeData construireTheme() {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Palette.cuir, width: 2),
+        borderSide: const BorderSide(color: Palette.or, width: 2),
       ),
     ),
     snackBarTheme: SnackBarThemeData(

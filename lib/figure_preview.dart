@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reprise_dressage_app/theme.dart';
 
 import 'package:reprise_dressage_app/Figures/path_animation.dart';
 import 'package:reprise_dressage_app/lettres.dart';
@@ -47,8 +48,8 @@ class _FigurePreviewState extends State<FigurePreview>
         children: [
           Container(
             decoration: BoxDecoration(
-              border: Border.all(width: 2),
-              color: Colors.amber[100],
+              border: Border.all(width: 2, color: Palette.charbon),
+              color: Palette.sol,
             ),
           ),
           CustomPaint(

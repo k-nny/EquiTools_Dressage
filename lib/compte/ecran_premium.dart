@@ -67,7 +67,7 @@ class _EcranPremiumState extends State<EcranPremium> {
           puce,
           style: const TextStyle(
             fontWeight: FontWeight.w800,
-            color: Palette.cuir,
+            color: Palette.orFonce,
           ),
         ),
         const SizedBox(width: 10),
@@ -86,9 +86,9 @@ class _EcranPremiumState extends State<EcranPremium> {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Palette.creme,
+          color: Palette.ivoire,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Palette.cuir.withValues(alpha: 0.4)),
+          border: Border.all(color: Palette.or.withValues(alpha: 0.6)),
         ),
         child: Column(
           children: [
@@ -146,10 +146,10 @@ class _EcranPremiumState extends State<EcranPremium> {
                         margin: const EdgeInsets.symmetric(horizontal: 4),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Palette.creme,
+                          color: Palette.ivoire,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: Palette.cuir.withValues(alpha: 0.4),
+                            color: Palette.or.withValues(alpha: 0.6),
                           ),
                         ),
                         child: Column(
@@ -249,7 +249,7 @@ class _EcranPremiumState extends State<EcranPremium> {
         if (premium.estPremium) {
           final fin = premium.jusqua;
           return _carte(
-            couleur: Palette.sable,
+            couleur: Palette.orPale,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -321,14 +321,14 @@ class _EcranPremiumState extends State<EcranPremium> {
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
           children: [
             _carte(
-              couleur: Palette.cuir,
+              couleur: Palette.charbon,
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Passez au niveau supérieur',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Palette.orClair,
                       fontWeight: FontWeight.w800,
                       fontSize: 20,
                     ),

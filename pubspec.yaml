@@ -83,6 +83,9 @@ flutter:
   assets:
     - assets/fonts/DejaVuSans.ttf
     - assets/fonts/DejaVuSans-Bold.ttf
+    # Logo EquiTools (en-tête de l'appli ; version complète pour le PDF).
+    - assets/images/logo_cercle.png
+    - assets/images/logo_complet.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

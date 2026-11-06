@@ -57,9 +57,9 @@ class Carriere extends StatelessWidget {
           children: [
             Container(
               decoration: BoxDecoration(
-                border: Border.all(width: 2, color: Palette.bordureSable),
+                border: Border.all(width: 2, color: Palette.charbon),
                 borderRadius: BorderRadius.circular(4),
-                color: Palette.sable,
+                color: Palette.sol,
               ),
             ),
             CustomPaint(
@@ -84,21 +84,21 @@ class Carriere extends StatelessWidget {
 
     double left = x - charW / 2;
     double top = y - fontSize / 2;
-    Color color = const Color(0xFF8D6E63);
+    Color color = Palette.orFonce;
 
     // lettres extérieures
     if (letter == 'A') {
       top = -fontSize * 1.5;
-      color = Palette.brunFonce;
+      color = Palette.charbon;
     } else if (letter == 'C') {
       top = h + fontSize * 0.5;
-      color = Palette.brunFonce;
+      color = Palette.charbon;
     } else if (positionMeters.dx == 0) {
       left = -charW * 2;
-      color = Palette.brunFonce;
+      color = Palette.charbon;
     } else if (positionMeters.dx == Lettres.width) {
       left = w + charW;
-      color = Palette.brunFonce;
+      color = Palette.charbon;
     }
 
     return Positioned(

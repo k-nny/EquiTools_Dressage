@@ -768,7 +768,7 @@ class _Controles extends StatelessWidget {
 
 /// Fond « prairie » autour de la carrière (purement décoratif).
 BoxDecoration _decorationPrairie() => BoxDecoration(
-  color: Palette.prairie,
+  color: Palette.orPale,
   borderRadius: BorderRadius.circular(22),
 );
 
