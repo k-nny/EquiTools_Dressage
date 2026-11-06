@@ -107,12 +107,10 @@ class _ReprisePlayerState extends State<ReprisePlayer>
 
   /// Découpe le tracé du mouvement en segments (un par allure, coupés
   /// exactement aux points de transition de couleur), avec pour chacun sa
-  /// durée. Les durées "physiques" (distance / vitesse) sont mises à
-  /// l'échelle pour que leur somme corresponde exactement à la durée totale
-  /// bridée (sinon le cheval n'atteint jamais la fin du tracé quand la durée
-  /// réelle dépasse la borne haute). Recalculé à la demande (mouvement
-  /// court, coût négligeable) pour ne jamais désynchroniser durée et
-  /// position.
+  /// durée "physique" (distance / vitesse de référence de l'allure). La
+  /// durée totale est la somme de ces durées, sans bornage. Recalculé à la
+  /// demande (mouvement court, coût négligeable) pour ne jamais
+  /// désynchroniser durée et position.
   (List<_SegmentTiming>, double) _profilVitesse(Mouvement mvt, Path path) {
     final totalLen = PathAnimation.totalLength(path);
     final pixelsParMetre = _h / Lettres.length;
@@ -140,13 +138,17 @@ class _ReprisePlayerState extends State<ReprisePlayer>
       rawTotal += d;
     }
 
-    final totalSeconds = _clampD(rawTotal, 0.8, 12.0);
-    final scale = rawTotal > 0 ? totalSeconds / rawTotal : 1.0;
+    // Durée = distance réelle / vitesse de référence de l'allure, SANS
+    // bornes ni remise à l'échelle : une même allure garde exactement la
+    // même vitesse quelle que soit la figure (cercle, diagonale, doublé…).
+    // Seul cas particulier : un mouvement sans vitesse (allure d'arrêt
+    // portant un tracé) reste immobile pendant 0,8 s, comme avant.
+    final totalSeconds = rawTotal > 0 ? rawTotal : 0.8;
 
     final timings = <_SegmentTiming>[];
     for (var i = 0; i < bornes.length; i++) {
       final (segStart, segEnd, allureSeg) = bornes[i];
-      timings.add((segStart, segEnd, rawDurations[i] * scale, allureSeg));
+      timings.add((segStart, segEnd, rawDurations[i], allureSeg));
     }
 
     return (timings, totalSeconds);
