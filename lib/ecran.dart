@@ -12,7 +12,7 @@ import 'compte/service_premium.dart';
 import 'reprise.dart';
 import 'reprise_controller.dart';
 import 'reprise_player.dart';
-import 'protocole_pdf.dart';
+import 'protocole_export.dart';
 import 'theme.dart';
 import 'reprise_storage.dart';
 
@@ -204,8 +204,7 @@ class _EcranState extends State<Ecran> {
           IconButton(
             tooltip: 'Protocole PDF',
             icon: const Icon(Icons.picture_as_pdf_outlined),
-            onPressed: () =>
-                partagerProtocolePdf(context, _controller.mouvements),
+            onPressed: () => exporterProtocole(context, _controller),
           ),
           IconButton(
             tooltip: "Réinitialiser à l'exemple",

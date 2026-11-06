@@ -22,7 +22,7 @@ const List<String> avantagesGratuit = [
   'Visualiser et animer votre reprise sur la carrière',
   'Créer, nommer et organiser vos propres figures',
   'Carrières 20 × 60 m et 20 × 40 m',
-  'Protocole PDF généré automatiquement',
+  "Protocole PDF d'entraînement généré automatiquement",
   'Avec un compte gratuit : 3 reprises sauvegardées',
 ];
 
@@ -32,5 +32,6 @@ const List<String> avantagesGratuit = [
 /// vide, l'écran indique que les avantages arrivent bientôt.
 const List<String> avantagesPremium = [
   'Aucune publicité',
+  'Protocole PDF de compétition (coefficients, notes /10, observations)',
   'Jusqu\'à 10 reprises sauvegardées dans votre compte (au lieu de 3)',
 ];
